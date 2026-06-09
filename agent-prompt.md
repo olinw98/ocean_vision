@@ -22,19 +22,63 @@ Architectural reminder that governs the whole build: **HoloOcean owns physics an
 
 ---
 
+## Resuming Mid-Project
+
+If `implementation-spec.md` already exists, this is a resumption session. Before doing anything else:
+
+1. Read the `## Current State` section at the top of `implementation-spec.md` to understand where the last session ended.
+2. Run `pytest` and confirm the suite is green. If tests are failing, treat fixing them as the first task before resuming planned work — log the fix as a diary entry.
+3. Review the `## Open Judgment Calls` section and note any that require user sign-off before proceeding.
+4. Read only the diary entries since the last `status: Complete` step to reorient; you do not need to re-read all prior entries.
+5. Continue from the `**next:**` field of the most recent diary entry.
+
+Do not start new implementation work until steps 1–5 are satisfied.
+
+---
+
 ## The Spec Diary: `implementation-spec.md`
 
-Create `implementation-spec.md` at the start of Chapter 1 and append throughout. Never overwrite; only append.
+Create `implementation-spec.md` at the start of Chapter 1 and append throughout. Never overwrite prior content; only append — except for the two living sections below, which must be updated in place each session.
 
 ```
 # Implementation Spec: FathomFollow
-## Critical Review       ← Chapter 1
-## Revised Blueprint     ← Chapter 2
-## Implementation Log     ← Chapter 3 (append per step)
-## Final Spec            ← Chapter 4
+## Current State              ← UPDATED IN PLACE each session (see format below)
+## Open Judgment Calls        ← UPDATED IN PLACE (see format below)
+## Critical Review            ← Chapter 1
+## Revised Blueprint          ← Chapter 2
+## Implementation Log         ← Chapter 3 (append per step)
+## Final Spec                 ← Chapter 4
 ```
 
-**Diary entry format** (Implementation Log). Wrap every entry in the tags exactly; do not rename fields — they are a machine-parseable contract.
+### Living section: `## Current State`
+
+Replace this section's content at the start and end of every session. Keep it short — it is an orientation snapshot for the next agent.
+
+```markdown
+## Current State
+
+**Last updated:** {ISO-8601 timestamp}
+**Last completed step:** {step number and name}
+**Test suite:** {N}/{N} passing | last run: {timestamp}
+**Active blockers:** {list of [BLOCKED] items, or "None"}
+**Next action:** {one sentence — what to do first in the next session}
+```
+
+### Living section: `## Open Judgment Calls`
+
+Append a row when a `[JUDGMENT CALL]` is made. Strike through and add a resolution note when a developer signs off or the situation resolves. This section is never deleted.
+
+```markdown
+## Open Judgment Calls
+
+| Step | Timestamp | Decision | Status |
+|------|-----------|----------|--------|
+| {N}  | {ISO-8601} | {one-line summary} | Open / Resolved: {note} |
+```
+
+### Diary entry format (Implementation Log)
+
+Wrap every entry in the tags exactly; do not rename fields — they are a machine-parseable contract.
 
 ```markdown
 <!-- DIARY_ENTRY -->
@@ -58,6 +102,30 @@ Create `implementation-spec.md` at the start of Chapter 1 and append throughout.
 
 Use real ISO-8601 timestamps. Write honest notes for your future self.
 
+### Manual integration gates
+
+Some steps include a manual integration gate (a real run that cannot be automated in CI). A step with a pending gate is marked `Partial`, not `Complete`. **You may continue to the next step past a `Partial`, but you must:**
+- Record the gate as an active blocker in `## Current State`
+- Note in the next step's diary entry that it depends on the pending gate
+- Never mark a step `Complete` until both tests and the manual gate are logged
+
+---
+
+## Blocked Item Protocol
+
+When you hit a `[BLOCKED]` condition:
+
+1. Log it in the diary entry with a `[BLOCKED]` tag and a one-sentence description.
+2. Add it to `## Current State` → Active blockers.
+3. Define the minimum fallback that lets work continue without the blocked dependency (e.g. a stub, a proxy fixture, a synthetic substitute). Implement the fallback and log it as a `[JUDGMENT CALL]`.
+4. **Timebox the block:** if the blocked dependency cannot be resolved within the current session, surface it to the user explicitly before ending the session:
+   ```
+   ⛔ UNRESOLVED BLOCKER: [description]
+   Needs: [what the user must provide or decide]
+   Fallback in use: [what is standing in]
+   ```
+5. Do not let a blocker silently carry across multiple sessions without surfacing it.
+
 ---
 
 ## Chapter 1 — Critical Review
@@ -65,26 +133,27 @@ Use real ISO-8601 timestamps. Write honest notes for your future self.
 **Objective:** Read the blueprint, find its weaknesses, write them down before building.
 
 1. Read `implementation-plan.md` completely.
-2. Create `implementation-spec.md`; add the header and `## Critical Review`.
-3. Write the critique covering each, specifically:
+2. Create `implementation-spec.md`; add the header, `## Current State` (initial), `## Open Judgment Calls` (empty table), and `## Critical Review`.
+3. **Run the dependency smoke sprint** before writing the critique: attempt to `import` or install each major dependency (HoloOcean, `ultralytics`, `fathomnet`, the chosen GS library). Record what actually installs vs. what fails. This takes five minutes and prevents CUDA/version surprises from surfacing phase-deep into the build.
+4. Write the critique covering each, specifically:
 
 **Assumption Audit** — List every implicit assumption, marked SAFE / RISKY / UNKNOWN. Give special attention to: (a) FathomNet-trained detector firing usably on rendered sim frames; (b) HoloOcean's DVL/sensor API names and shapes; (c) that a textured mimic resembles the taxon enough to be detected; (d) sim throughput for Phases 2–4; (e) **that GS-rendered imagery actually transfers to HoloOcean's look better than FathomNet alone — this is a hypothesis, not a given, and Phase 1.5's ablation is the test of it**; (f) **that the chosen GS source dataset ships usable camera poses and that the target organism can be represented in it.**
 
 **Gap Analysis** — What's underspecified? Specifically: how the target mimic asset is created; the exact dropout rule; how body-frame velocity ground truth is derived from pose logs; nav↔controller coupling at Phase 4; **the GS label strategy (compositing a target organism into rendered scenes vs. annotating an existing one), and how GS camera paths are chosen to cover useful viewpoints.**
 
-**Tech Stack Assessment** — Verify current install paths and compatibility for HoloOcean, Ultralytics + torch CUDA, fathomnet-py, and **the chosen underwater-GS implementation (WaterSplatting default / SeaSplat alt) — confirm it builds on this GPU/CUDA, and confirm the SeaThru-NeRF (or chosen) source dataset is obtainable with poses.** Flag version/CUDA conflicts before they bite.
+**Tech Stack Assessment** — Verify current install paths and compatibility for HoloOcean, Ultralytics + torch CUDA, fathomnet-py, and **the chosen underwater-GS implementation (WaterSplatting default / SeaSplat alt) — confirm it builds on this GPU/CUDA, and confirm the SeaThru-NeRF (or chosen) source dataset is obtainable with poses.** Flag version/CUDA conflicts before they bite. Cross-reference with the dependency smoke sprint results from step 3.
 
 **Interface & Contract Risks** — Is `Command` sufficient for visual servoing and a future RL controller? Is `SimObservation` complete for both loops? **Is `GSRenderer` sufficient to later swap an offline render batch for an in-loop renderer without touching callers?** Where do the seams leak?
 
 **Scope & Complexity Check** — Which phase is most likely to balloon? (Plan's bet: Phase 1.5 GS reconstruction setup and Phase 4 integration.) Is anything labeled simple that isn't? **Confirm GS stays offline in v1; flag any creep toward in-loop rendering.**
 
-4. End with a **Severity Summary**:
+5. End with a **Severity Summary**:
 ```
 BLOCKERS (must resolve before building): [list or "none"]
 WARNINGS (should address in revision): [list]
 NOTES (low-risk observations): [list]
 ```
-5. Do not proceed until the Critical Review is fully written.
+6. Do not proceed until the Critical Review is fully written.
 
 ---
 
@@ -94,7 +163,7 @@ NOTES (low-risk observations): [list]
 
 1. Add `## Revised Blueprint`.
 2. For each BLOCKER and WARNING write: **Issue / Resolution / Changed: X → Y / Rationale.**
-3. If a BLOCKER needs user input, write it up and **stop**:
+3. If a BLOCKER needs user input, write it up and **stop** (follow the Blocked Item Protocol above):
 ```
 ⛔ UNRESOLVED BLOCKER: [description]
 Needs: [information/decision required]
@@ -112,12 +181,14 @@ Likely candidates to surface here: (a) the target taxon (Open Question 1) — ve
 Per step: write failing tests first → confirm red (log the failure) → minimum implementation → confirm green → refactor → re-run → write the diary entry. A step is complete only when tests pass and the diary entry is written.
 
 ### Discipline rules
+- **Run `pytest` at the start of every session** to confirm the inherited state before touching anything.
 - TDD is non-negotiable; tests precede implementation every step.
 - Never modify a test to make it pass; if a test is wrong, surface `[TEST QUESTION]`.
 - Red must precede green.
 - One step at a time; no speculative work from later phases.
-- Log genuine blockers with `[BLOCKED]`.
-- `implementation-spec.md` is append-only.
+- Log genuine blockers with `[BLOCKED]` and follow the Blocked Item Protocol.
+- `implementation-spec.md` body is append-only; `## Current State` and `## Open Judgment Calls` are updated in place.
+- Update `## Current State` at the end of every session, even if no step was completed.
 
 ### The steps
 
@@ -125,7 +196,7 @@ Per step: write failing tests first → confirm red (log the failure) → minimu
 
 - **Step 0.1 — Repo skeleton & config.** Tests: each package module imports; pydantic scenario/training/render config models reject malformed YAML and accept valid samples. Build: layout per plan §7, `pyproject.toml` with pinned deps, config models. Files: `pyproject.toml`, `src/fathomfollow/config/*`, `tests/test_config.py`. Acceptance: config round-trips; imports succeed.
 - **Step 0.2 — `SimEnv` protocol + `RecordedSimEnv`.** Tests: replay a checked-in fixture, yield well-formed `SimObservation`s (shapes/dtypes/flags); protocol methods honored. Build: `SimEnv`, `SimObservation`, `RecordedSimEnv`, a synthetic fixture. Files: `src/fathomfollow/sim/{base,recorded}.py`, `fixtures/`, `tests/test_recorded_sim.py`. Acceptance: tests pass, no Unreal.
-- **Step 0.3 — `HoloOceanSimEnv` smoke (integration).** Tests: unit-test the raw-sensor→`SimObservation` mapping from a mock (no live sim). Build: `HoloOceanSimEnv`; manual `scripts/smoke_sim.py` that steps real HoloOcean and records a fixture. Run once; log results incl. actual HoloOcean version + sensor API. Files: `src/fathomfollow/sim/holoocean_env.py`, `scripts/smoke_sim.py`, `tests/test_obs_mapping.py`. Acceptance: mapping tests pass; manual smoke logged.
+- **Step 0.3 — `HoloOceanSimEnv` smoke (integration).** Tests: unit-test the raw-sensor→`SimObservation` mapping from a mock (no live sim). Build: `HoloOceanSimEnv`; manual `scripts/smoke_sim.py` that steps real HoloOcean and records a fixture. Run once; log results incl. actual HoloOcean version + sensor API. Files: `src/fathomfollow/sim/holoocean_env.py`, `scripts/smoke_sim.py`, `tests/test_obs_mapping.py`. Acceptance: mapping tests pass; manual smoke logged. *Manual gate — step may be Partial until HoloOcean is installed.*
 
 **Phase 1 — Perception (baseline)**
 
@@ -136,7 +207,7 @@ Per step: write failing tests first → confirm red (log the failure) → minimu
 **Phase 1.5 — Gaussian-Splatting Augmentation**
 
 - **Step 1.5.1 — `GSRenderer` interface + `RecordedGSRenderer`.** Tests: `RecordedGSRenderer.render(pose, turbidity)` returns a well-formed RGB array from a small pre-rendered fixture; interface methods honored; turbidity outside [0,1] rejected. Build: `GSRenderer` Protocol, `RecordedGSRenderer`, a tiny fixture of pre-rendered frames. Files: `src/fathomfollow/gs/{base,recorded}.py`, `fixtures/gs/`, `tests/test_gs_renderer.py`. Acceptance: tests pass, no GPU/GS train needed. *(Build this first so everything downstream is testable without a real splat.)*
-- **Step 1.5.2 — GS reconstruction (integration).** Tests: `GSScene` manifest writer validates and round-trips; the source-dataset loader parses poses correctly on a fixture. Build: `WaterSplattingGSRenderer` (or chosen lib) implementing `GSRenderer`; `ff-gs train` to reconstruct a scene from the posed source dataset. Run the real reconstruction manually; log `train_psnr` and a visual check. Files: `src/fathomfollow/gs/watersplatting.py`, `cli.py`, `tests/test_gs_manifest.py`. Acceptance: manifest/loader tests pass; manual reconstruction reaches a recorded render-quality floor (logged). If the GS library or dataset won't install/download, `[BLOCKED]` and surface it.
+- **Step 1.5.2 — GS reconstruction (integration).** Tests: `GSScene` manifest writer validates and round-trips; the source-dataset loader parses poses correctly on a fixture. Build: `WaterSplattingGSRenderer` (or chosen lib) implementing `GSRenderer`; `ff-gs train` to reconstruct a scene from the posed source dataset. Run the real reconstruction manually; log `train_psnr` and a visual check. Files: `src/fathomfollow/gs/watersplatting.py`, `cli.py`, `tests/test_gs_manifest.py`. Acceptance: manifest/loader tests pass; manual reconstruction reaches a recorded render-quality floor (logged). If the GS library or dataset won't install/download, follow the Blocked Item Protocol immediately. *Manual gate — step may be Partial until GS env is set up.*
 - **Step 1.5.3 — Turbidity-swept labeled render pipeline.** Tests: given a camera path + turbidity list, the render driver produces one labeled frame per (pose, turbidity) with YOLO labels; **the same pose at higher turbidity is deterministically different from lower turbidity (and identical given the same seed/params)**; `GSRenderManifest` written; labels are well-formed. Use `RecordedGSRenderer` so tests need no GPU. Build: `ff-gs render` with `--label-strategy`, camera-path config, label writer. Files: `src/fathomfollow/gs/render_pipeline.py`, `src/fathomfollow/gs/labeling.py`, `cli.py`, `tests/test_gs_render_pipeline.py`. Acceptance: tests pass on the recorded renderer; a manual real render batch produces a labeled dataset (logged).
 - **Step 1.5.4 — Merge + retrain + ablation (the payoff).** Tests: `ff-data merge` combines FathomNet + GS sources with provenance tags and fresh deterministic splits; no leakage across splits; combined `data.yaml` valid. Build: `ff-data merge`; retrain the detector on the combined set. Files: `src/fathomfollow/data/merge.py`, `cli.py`, `tests/test_merge.py`. Acceptance: merge tests pass; **retrained detector's sim-frame firing rate is recorded and compared to the Step 1.3 baseline. Improvement → log the margin. No improvement → log it honestly as a null result with a short analysis (turbidity range? scene mismatch? label strategy?).** Do not tune until it looks good and hide the path; the ablation is a result either way.
 
@@ -150,7 +221,7 @@ Per step: write failing tests first → confirm red (log the failure) → minimu
 
 - **Step 3.1 — Tracker wrapper.** Tests: stable IDs across a synthetic sequence; track survives a gap up to `max_gap` then drops; single active-target selection deterministic. Build: `Tracker` around ByteTrack/`supervision`. Files: `src/fathomfollow/perception/tracker.py`, `tests/test_tracker.py`. Acceptance: tests pass.
 - **Step 3.2 — Visual-servoing controller.** Tests: centroid right-of-center → positive yaw; bbox over target band → reduced/negative forward vel; vertical error → vertical command; `active=None` → safe default. Deterministic, no sim. Build: PID `FollowController` emitting `Command`. Files: `src/fathomfollow/control/visual_servo.py`, `tests/test_controller.py`. Acceptance: tests pass on synthetic tracks.
-- **Step 3.3 — Target mimic + follow integration (integration).** Tests: scenario config validates; mimic trajectory generator deterministic. Build: scripted target mimic, wire detector→tracker→controller→sim. Manual in-sim run; log target-in-frame fraction. Files: `src/fathomfollow/sim/target.py`, `config/scenario.yaml`, `tests/test_scenario_config.py`. Acceptance: config tests pass; manual run's in-frame fraction recorded.
+- **Step 3.3 — Target mimic + follow integration (integration).** Tests: scenario config validates; mimic trajectory generator deterministic. Build: scripted target mimic, wire detector→tracker→controller→sim. Manual in-sim run; log target-in-frame fraction. Files: `src/fathomfollow/sim/target.py`, `config/scenario.yaml`, `tests/test_scenario_config.py`. Acceptance: config tests pass; manual run's in-frame fraction recorded. *Manual gate — step may be Partial until HoloOcean is installed.*
 
 **Phase 4 — Integration & Evaluation**
 
@@ -165,14 +236,15 @@ Per step: write failing tests first → confirm red (log the failure) → minimu
 
 **Objective:** Leave a complete, accurate record of what was built.
 
-1. Add `## Final Spec`.
-2. Write:
+1. Run `ff-eval --run runs/<final> --baseline dead_reckoning --ablate-gs` and confirm the output satisfies the success criterion: the AUV kept the target in frame for ≥ the recorded floor fraction of steps, and drift-within-dropout under the learned estimator is lower than the dead-reckoning baseline. Record the output verbatim in the Final Spec. If the criterion is not met, document the gap honestly — do not omit or soften the numbers.
+2. Add `## Final Spec`.
+3. Write:
 - **Actual File Structure** — real tree.
 - **Actual Dependencies** — pinned versions exactly from `pyproject.toml` (note resolved `holoocean`, `torch`+CUDA, `ultralytics`, `fathomnet`, the GS implementation, and the GS source dataset used).
 - **Actual API / Interface Contracts** — real CLI signatures and the `SimEnv`/`GSRenderer`/`Detector`/`Tracker`/`FollowController`/`VelocityEstimator` signatures as implemented.
 - **Deviation Log** — table of every difference from the Revised Blueprint with reasons; or "None".
 - **Known Issues / Future Work** — domain-gap state and the GS ablation outcome, GS turbidity-model and pose-source caveats, dropout-model realism, in-loop GS rendering and RL left for v2.
-3. One-paragraph closing note: what was built, whether it met the success criterion (followed target + lower drift-within-dropout than baseline), whether GS augmentation moved the sim-frame firing rate, and what a second pass would change.
+4. One-paragraph closing note: what was built, whether it met the success criterion (followed target + lower drift-within-dropout than baseline), whether GS augmentation moved the sim-frame firing rate, and what a second pass would change.
 
 ---
 
