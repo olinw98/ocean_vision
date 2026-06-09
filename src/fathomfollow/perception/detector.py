@@ -8,6 +8,29 @@ import numpy as np
 from fathomfollow.perception.types import DetectionRecord
 
 
+def parse_training_metrics(raw: dict) -> dict:
+    """Parse Ultralytics training metrics dict into a stable JSON-serializable form."""
+    return {
+        "mAP50": float(raw.get("metrics/mAP50(B)", 0.0)),
+        "mAP50-95": float(raw.get("metrics/mAP50-95(B)", 0.0)),
+        "precision": float(raw.get("metrics/precision(B)", 0.0)),
+        "recall": float(raw.get("metrics/recall(B)", 0.0)),
+    }
+
+
+def metrics_from_train_results(results: object) -> dict:
+    """Extract metrics from an Ultralytics train() return value."""
+    if results is None:
+        return parse_training_metrics({})
+    raw = getattr(results, "results_dict", None)
+    if raw is None and hasattr(results, "metrics"):
+        metrics = results.metrics
+        raw = metrics if isinstance(metrics, dict) else getattr(metrics, "results_dict", {})
+    if not isinstance(raw, dict):
+        raw = {}
+    return parse_training_metrics(raw)
+
+
 class YoloDetector:
     def __init__(self, weights: str | Path = "yolo11n.pt", conf_threshold: float = 0.25) -> None:
         self._weights = str(weights)

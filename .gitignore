@@ -1,8 +1,9 @@
-data/
-models/
-runs/
+/data/
+/models/
+/runs/
 .venv/
 __pycache__/
 *.pyc
 .pytest_cache/
 *.egg-info/
+yolo11n.pt

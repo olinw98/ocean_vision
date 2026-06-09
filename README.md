@@ -13,4 +13,6 @@ pip install -e ".[dev]"
 pytest
 ```
 
-HoloOcean requires a separate install from GitHub after accepting the Unreal EULA. GS training uses a separate conda env (see `implementation-spec.md`).
+HoloOcean requires a separate install from GitHub after accepting the Unreal EULA. See `docs/holoocean_install.md`. GS training uses a separate conda env (see `docs/gs_setup.md`).
+
+Recorded baselines: `docs/baselines.json`.

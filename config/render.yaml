@@ -1,0 +1,6 @@
+scene_checkpoint: fixtures/gs/recorded
+camera_path: config/cam_path.yaml
+turbidity_values: [0.0, 0.3, 0.6]
+label_strategy: composited-target
+out_dir: data/gs_renders
+seed: 42

@@ -1,0 +1,24 @@
+{
+  "pre_gs_baseline": {
+    "description": "Step 1.3 detector firing rate on sim-like frames before GS augmentation",
+    "recorded_at": "2026-06-09",
+    "taxon_trained": "Benthocodon",
+    "weights": "runs/detect/train/weights/best.pt",
+    "train_mAP50": 0.764,
+    "fixtures": {
+      "synthetic_smoke": {
+        "path": "fixtures/sim/smoke.npz",
+        "firing_rate": 0.0,
+        "note": "Random pixels; domain gap"
+      },
+      "fathomnet_proxy": {
+        "path": "fixtures/sim/fathomnet_proxy.npz",
+        "firing_rate": 0.18,
+        "n_detections": 9,
+        "n_frames": 50,
+        "note": "Real FathomNet RGB in sim harness; ablation target until HoloOcean fixture exists"
+      }
+    },
+    "ablation_target_firing_rate": 0.18
+  }
+}

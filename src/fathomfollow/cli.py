@@ -13,10 +13,18 @@ from fathomfollow.config.models import (
     dump_yaml_model,
     load_yaml_model,
 )
+from fathomfollow.data.fathomnet import (
+    auto_select_and_prepare,
+    run_fathomnet_count,
+    select_taxon_by_count,
+)
 from fathomfollow.data.merge import merge_datasets
 from fathomfollow.data.pipeline import CANDIDATE_TAXA, prepare_from_coco
-from fathomfollow.eval.metrics import compute_drift_metrics, gs_ablation_table, tracking_retention
+from fathomfollow.eval.metrics import gs_ablation_table
 from fathomfollow.eval.report import generate_report
+from fathomfollow.eval.run_eval import evaluate_run
+from fathomfollow.nav.training import train_nav_estimator
+from fathomfollow.perception.detector import metrics_from_train_results
 from fathomfollow.gs.base import Pose
 from fathomfollow.gs.recorded import RecordedGSRenderer
 from fathomfollow.gs.render_pipeline import render_labeled_batch
@@ -34,6 +42,30 @@ def main_data() -> None:
     prep.add_argument("--coco", type=Path, required=True)
     prep.add_argument("--out", type=Path, required=True)
 
+    count_p = sub.add_parser("count")
+    count_p.add_argument(
+        "--taxa",
+        type=str,
+        default=",".join(CANDIDATE_TAXA),
+        help="Comma-separated candidate taxa",
+    )
+
+    auto_p = sub.add_parser("auto-prepare")
+    auto_p.add_argument("--out", type=Path, required=True)
+    auto_p.add_argument(
+        "--format",
+        type=str,
+        choices=["yolo", "coco"],
+        default="yolo",
+        help="FathomNet export format (yolo avoids COCO bbox bugs)",
+    )
+    auto_p.add_argument(
+        "--taxa",
+        type=str,
+        default=",".join(CANDIDATE_TAXA),
+        help="Comma-separated candidate taxa",
+    )
+
     merge_p = sub.add_parser("merge")
     merge_p.add_argument("--sources", type=str, required=True)
     merge_p.add_argument("--out", type=Path, required=True)
@@ -41,6 +73,24 @@ def main_data() -> None:
     args = parser.parse_args()
     if args.cmd == "prepare":
         prepare_from_coco(args.coco, args.out, [args.taxa])
+    elif args.cmd == "count":
+        taxa = [t.strip() for t in args.taxa.split(",")]
+        counts = run_fathomnet_count(taxa)
+        selected = select_taxon_by_count(counts, taxa)
+        print(json.dumps({"counts": counts, "selected": selected}, indent=2))
+    elif args.cmd == "auto-prepare":
+        taxa = [t.strip() for t in args.taxa.split(",")]
+        selected, manifest = auto_select_and_prepare(args.out, taxa, format=args.format)
+        print(
+            json.dumps(
+                {
+                    "selected_taxon": selected,
+                    "n_images": manifest.n_images,
+                    "data_yaml": manifest.data_yaml_path,
+                },
+                indent=2,
+            )
+        )
     elif args.cmd == "merge":
         sources = [Path(s.strip()) for s in args.sources.split(",")]
         merge_datasets(sources, args.out)
@@ -92,14 +142,14 @@ def main_train_detector() -> None:
     from ultralytics import YOLO
 
     model = YOLO(cfg.model)
-    model.train(
+    results = model.train(
         data=str(cfg.data_yaml),
         epochs=cfg.epochs,
         imgsz=cfg.imgsz,
         batch=cfg.batch,
         seed=cfg.seed,
     )
-    metrics = {"mAP50": 0.0, "mAP50-95": 0.0}
+    metrics = metrics_from_train_results(results)
     out = Path(cfg.data_yaml).parent / "metrics.json"
     out.write_text(json.dumps(metrics, indent=2), encoding="utf-8")
 
@@ -109,7 +159,9 @@ def main_train_nav() -> None:
     parser.add_argument("--config", type=Path, required=True)
     args = parser.parse_args()
     cfg = load_yaml_model(args.config, NavTrainingConfig)
-    print(f"Nav training config loaded: {cfg.arch}, epochs={cfg.epochs}")
+    out_dir = cfg.trajectories_dir.parent / "nav_model"
+    ckpt = train_nav_estimator(cfg, out_dir)
+    print(json.dumps({"checkpoint": str(ckpt), "out_dir": str(out_dir)}))
 
 
 def main_run() -> None:
@@ -131,18 +183,24 @@ def main_eval() -> None:
     parser.add_argument("--baseline-rate", type=float, default=0.0)
     parser.add_argument("--augmented-rate", type=float, default=0.0)
     args = parser.parse_args()
-    nav_path = args.run / "nav_log.json"
-    if nav_path.exists():
-        nav = json.loads(nav_path.read_text(encoding="utf-8"))
-        print(f"Evaluated {len(nav)} nav steps from {args.run}")
     report_path = args.run / "report.md"
-    from fathomfollow.eval.metrics import DriftMetrics
-
-    generate_report(
-        report_path,
-        DriftMetrics(1.0, 2.0, 1.5),
-        DriftMetrics(0.8, 1.5, 0.9),
-        retention=0.75,
-        ablation=gs_ablation_table(args.baseline_rate, args.augmented_rate) if args.ablate_gs else None,
+    result = evaluate_run(args.run, report_path=report_path)
+    if args.ablate_gs:
+        ablation = gs_ablation_table(args.baseline_rate, args.augmented_rate)
+        generate_report(
+            report_path,
+            drift_baseline=result.drift_baseline,
+            drift_learned=result.drift_learned,
+            retention=result.tracking_retention,
+            ablation=ablation,
+        )
+    print(
+        json.dumps(
+            {
+                "drift_learned_mean": result.drift_learned.mean_drift,
+                "drift_within_dropout": result.drift_learned.drift_within_dropout,
+                "tracking_retention": result.tracking_retention,
+                "report": str(report_path),
+            }
+        )
     )
-    print(f"Report written to {report_path}")
