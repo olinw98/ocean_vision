@@ -574,6 +574,60 @@ Two loops (perception→control, navigation) share HoloOcean via `SimEnv`. Offli
 **next:** reorganize + retrain on Bathochordaeus; Phase 1.5.2 GS env setup
 <!-- /DIARY_ENTRY -->
 
+<!-- DIARY_ENTRY -->
+### [2026-06-09T03:00:00Z] Step 1.1 — Bathochordaeus download complete
+
+**project:** FathomFollow
+**step:** 1.1
+**phase:** Phase 1
+**status:** Complete
+**files_touched:** data/fathomnet_raw/Bathochordaeus/, data/fathomnet_batho/, config/detector_train.yaml
+**tests_written:** n/a
+**tests_passing:** 61/61
+**summary:** Resumed fathomnet-generate YOLO download; 1350 images complete. reorganize_yolo_flat → data/fathomnet_batho (train=1083, val=132, test=135).
+**tdd_cycle:** n/a
+**deviations:** None
+**judgment_calls:** None
+**blockers:** None
+**next:** Step 1.2 retrain on Bathochordaeus
+<!-- /DIARY_ENTRY -->
+
+<!-- DIARY_ENTRY -->
+### [2026-06-09T03:30:00Z] Step 1.2 — Bathochordaeus detector training
+
+**project:** FathomFollow
+**step:** 1.2
+**phase:** Phase 1
+**status:** Complete
+**files_touched:** config/detector_train.yaml, data/fathomnet_batho/metrics.json, runs/detect/train-2/
+**tests_written:** n/a
+**tests_passing:** 61/61
+**summary:** 5-epoch YOLO11n on Bathochordaeus (CPU). metrics.json: mAP50=0.644, mAP50-95=0.415. Weights: runs/detect/train-2/weights/best.pt.
+**tdd_cycle:** GREEN — metrics_from_train_results | REFACTOR — none
+**deviations:** CPU train ~13 min; GPU would be faster.
+**judgment_calls:** None
+**blockers:** None
+**next:** Step 1.3 baseline refresh
+<!-- /DIARY_ENTRY -->
+
+<!-- DIARY_ENTRY -->
+### [2026-06-09T03:45:00Z] Step 1.3 — Pre-GS baseline (Bathochordaeus weights)
+
+**project:** FathomFollow
+**step:** 1.3
+**phase:** Phase 1
+**status:** Complete
+**files_touched:** docs/baselines.json, runs/pre_gs_baseline_batho.json
+**tests_written:** n/a
+**tests_passing:** 61/61
+**summary:** YoloDetector(train-2/best.pt) on fathomnet_proxy.npz: firing_rate=2.12 (106 dets / 50 frames). Updated ablation_target_firing_rate in docs/baselines.json. Prior Benthocodon dev baseline was 0.18.
+**tdd_cycle:** n/a — measurement
+**deviations:** Proxy fixture still; HoloOcean pending Epic/Py3.11 install.
+**judgment_calls:** None
+**blockers:** None
+**next:** Phase 1.5 GS render + merge + ablation vs 2.12
+<!-- /DIARY_ENTRY -->
+
 ## Final Spec
 
 *(To be completed in Chapter 4.)*
