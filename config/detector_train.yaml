@@ -1,5 +1,5 @@
-data_yaml: data/fathomnet/data.yaml
-epochs: 3
+data_yaml: data/fathomnet_batho/data.yaml
+epochs: 5
 model: yolo11n.pt
 imgsz: 640
 batch: 8
