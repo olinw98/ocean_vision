@@ -2,11 +2,11 @@
 
 ## Current State
 
-**Last updated:** 2026-06-09T03:45:00Z
-**Last completed step:** 1.3 — Pre-GS baseline (Bathochordaeus weights)
-**Test suite:** 61/61 passing | last run: 2026-06-09 (GPU build machine)
-**Active blockers:** HoloOcean (Epic EULA + GitHub install on Python 3.11; PyPI client fails on 3.13); `water_splatting` conda env not set up (Phase 1.5)
-**Next action:** Phase 1.5 — set up GS conda env, run `ff-gs train` + `ff-gs render`, merge with FathomNet, retrain detector, ablation vs `ablation_target_firing_rate` 2.12 in `docs/baselines.json`
+**Last updated:** 2026-06-09T14:00:00Z
+**Last completed step:** PM — workflow tooling (ff-status, session-end skill, pm-cheatsheet, notion-setup); build step 1.3 still latest integration gate
+**Test suite:** 64/64 passing | last run: 2026-06-09 (Mac PM session)
+**Active blockers:** GitHub push blocked until `olin-wei-ai` has write access to `olinw98/ocean_vision`; HoloOcean (Epic + Py 3.11 on Windows); `water_splatting` conda env (Phase 1.5)
+**Next action (build machine):** Push workflow branch after collaborator access → Phase 1.5 GS conda, render, ablation vs 2.12
 
 ## Open Judgment Calls
 
@@ -18,6 +18,7 @@
 | 1.1 | 2026-06-08T23:30:00Z | Default auto-prepare to YOLO format; COCO path retained but known broken for some taxa in fathomnet-py 1.10 | Open |
 | 1.2 | 2026-06-09T00:30:00Z | Use Benthocodon for first live train to unblock pipeline; swap to Bathochordaeus before final ablation | Resolved: Bathochordaeus retrain complete 2026-06-09T03:30:00Z |
 | 0.3 / 1.3 | 2026-06-09T01:30:00Z | Proxy fixture uses real FathomNet RGB + synthetic IMU/DVL; honest interim baseline, not a HoloOcean substitute | Open |
+| PM | 2026-06-09T14:00:00Z | Notion is human dashboard only; git diary remains agent source of truth | Open |
 
 ## Critical Review
 
@@ -645,6 +646,24 @@ Two loops (perception→control, navigation) share HoloOcean via `SimEnv`. Offli
 **judgment_calls:** None
 **blockers:** None
 **next:** Phase 1.5 GS render + merge + ablation vs 2.12
+<!-- /DIARY_ENTRY -->
+
+<!-- DIARY_ENTRY -->
+### [2026-06-09T14:00:00Z] PM — Workflow tooling (Mac session)
+
+**project:** FathomFollow
+**step:** PM
+**phase:** Cross-cutting
+**status:** Complete
+**files_touched:** docs/pm-cheatsheet.md, docs/notion-setup.md, docs/workflow.md, src/fathomfollow/project_status.py, .cursor/skills/, .cursor/rules/, implementation-spec.md
+**tests_written:** tests/test_project_status.py (prior commit on branch)
+**tests_passing:** 64/64
+**summary:** Extended workflow branch: ff-status Windows venv fix, PM cheat sheet, Notion setup guide, Current State refresh. Branch cursor/project-workflow-improvements not on origin — push blocked until olin-wei-ai collaborator access on olinw98/ocean_vision.
+**tdd_cycle:** n/a — PM/docs
+**deviations:** None
+**judgment_calls:** [JUDGMENT CALL] Notion is human dashboard only; git diary remains agent source of truth.
+**blockers:** [BLOCKED] GitHub write access for olin-wei-ai to push workflow branch.
+**next:** At home: grant collaborator access, push branch, merge to main; then GPU Phase 1.5
 <!-- /DIARY_ENTRY -->
 
 ## Final Spec

@@ -1,4 +1,5 @@
 from fathomfollow.project_status import (
+    _find_venv_pytest,
     _parse_current_state,
     _parse_diary_entries,
     _diary_warnings,
@@ -35,6 +36,15 @@ def test_parse_current_state():
     assert state["present"] is True
     assert state["last_updated"] == "2026-06-09T03:45:00Z"
     assert state["next_action"] == "Phase 1.5 GS work"
+
+
+def test_find_venv_pytest_prefers_existing_path(monkeypatch, tmp_path):
+    bin_dir = tmp_path / ".venv" / "bin"
+    bin_dir.mkdir(parents=True)
+    pytest_bin = bin_dir / "pytest"
+    pytest_bin.write_text("#!/bin/sh\n", encoding="utf-8")
+    monkeypatch.setattr("fathomfollow.project_status.ROOT", tmp_path)
+    assert _find_venv_pytest() == pytest_bin
 
 
 def test_diary_warnings_stale_current_state():

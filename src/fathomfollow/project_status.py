@@ -89,9 +89,17 @@ def _git_sync() -> tuple[str | None, bool | None, int | None, int | None]:
     return branch, clean, ahead, behind
 
 
+def _find_venv_pytest() -> Path | None:
+    for rel in ((".venv", "bin", "pytest"), (".venv", "Scripts", "pytest.exe")):
+        candidate = ROOT.joinpath(*rel)
+        if candidate.exists():
+            return candidate
+    return None
+
+
 def _run_pytest() -> tuple[int | None, int | None, bool]:
-    venv_pytest = ROOT / ".venv" / "bin" / "pytest"
-    pytest_cmd = [str(venv_pytest)] if venv_pytest.exists() else [sys.executable, "-m", "pytest"]
+    venv_pytest = _find_venv_pytest()
+    pytest_cmd = [str(venv_pytest)] if venv_pytest else [sys.executable, "-m", "pytest"]
     try:
         result = subprocess.run(
             [*pytest_cmd, "-q", "--tb=no"],

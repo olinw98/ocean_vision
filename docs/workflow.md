@@ -59,7 +59,7 @@ Safe to work without GPU artifacts. Focus on: agent prompt, skills, rules, spec 
 
 Living sections (**Current State**, **Open Judgment Calls**) are updated in place. The Implementation Log is append-only.
 
-Run `ff-status --check-diary` to flag a stale or missing Current State block.
+See also: `docs/pm-cheatsheet.md` (one-page reference), `docs/notion-setup.md` (Notion alongside git).
 
 ## Integration measurements → git
 
