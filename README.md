@@ -1,4 +1,4 @@
-# FathomFollow
+# ocean_vision (FathomFollow)
 
 Simulation-based AUV visual follow with DVL-dropout navigation and offline Gaussian-splatting augmentation.
 
