@@ -1,0 +1,20 @@
+---
+description: FathomFollow project workflow — diary, TDD, multi-machine split, session rituals
+alwaysApply: true
+---
+
+# FathomFollow workflow
+
+This repo uses an agentic build contract. Before implementation work:
+
+1. Read `agent-prompt.md` and `implementation-spec.md` → **Current State**
+2. Run `ff-status` (or `ff-status --check-diary` at session end)
+3. Follow TDD: red → green → refactor; append diary entries per step
+
+**Do not** edit `implementation-plan.md`. Metrics that matter for the plan go in `docs/baselines.json` + the diary, not only gitignored `runs/`.
+
+**Multi-machine:** GPU build machine owns training/integration gates; git carries code + spec + baselines. See `docs/workflow.md`.
+
+**Skills:** `fathomfollow-resume` (session start), `fathomfollow-session-end` (session end).
+
+Standing rules from `agent-prompt.md`: no HoloOcean/GS in unit tests; no ground truth outside `src/fathomfollow/eval/`.

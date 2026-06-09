@@ -15,4 +15,4 @@ pytest
 
 HoloOcean requires a separate install from GitHub after accepting the Unreal EULA. See `docs/holoocean_install.md`. GS training uses a separate conda env (see `docs/gs_setup.md`).
 
-Recorded baselines: `docs/baselines.json`.
+Recorded baselines: `docs/baselines.json`. Multi-machine workflow: `docs/workflow.md`.

@@ -23,14 +23,18 @@ Optional if relevant: `docs/holoocean_install.md`, `docs/gs_setup.md`, `README.m
 
 ## Verify live state (run commands)
 
-```powershell
+```bash
 cd <project-root>
+git pull                    # if user may have pushed from another machine
 git status -sb
 git log --oneline -5
-.venv\Scripts\pytest -q --tb=no
+ff-status                   # pytest + diary + artifacts (preferred)
+# or: pytest -q --tb=no
 ```
 
-Check local artifacts (existence + counts; these are gitignored):
+Activate venv first if needed: `source .venv/bin/activate` (mac/linux) or `.venv\Scripts\activate` (Windows).
+
+**Multi-machine:** See `docs/workflow.md`. Gitignored `data/` and `runs/` may be MISSING on a PM-only machine — that is expected. Trust committed `docs/baselines.json` + diary over missing local weights.
 
 | Path | What it proves |
 |------|----------------|
@@ -41,7 +45,7 @@ Check local artifacts (existence + counts; these are gitignored):
 | `data/nav_model/velocity_estimator.pt` | Nav model (local) |
 | `fixtures/sim/fathomnet_proxy.npz` | Step 1.3 proxy fixture |
 
-Use `(Get-ChildItem <dir> -File).Count` on Windows for image counts.
+`ff-status` reports all of the above. For manual counts: `find data/... -type f | wc -l` (mac/linux) or `(Get-ChildItem <dir> -File).Count` (Windows).
 
 ## Classify each implementation-plan phase
 
@@ -124,7 +128,12 @@ Pick the **first incomplete unblocked** step:
 5. Phase 3 target mimic in live sim
 6. Phase 4 consolidated `ff-run` + `ff-eval` report
 
-If conda/GPU/HoloOcean unavailable, recommend the highest-value **offline** step (RecordedGSRenderer render batch, proxy baseline refresh, commit/diary hygiene).
+If conda/GPU/HoloOcean unavailable, recommend the highest-value **offline** step (RecordedGSRenderer render batch, proxy baseline refresh, workflow/diary hygiene on a PM machine).
+
+## Related
+
+- Session end: **fathomfollow-session-end** skill
+- Multi-machine roles: `docs/workflow.md`
 
 ## Trigger phrases
 

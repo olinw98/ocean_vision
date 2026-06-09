@@ -26,13 +26,14 @@ Architectural reminder that governs the whole build: **HoloOcean owns physics an
 
 If `implementation-spec.md` already exists, this is a resumption session. Before doing anything else:
 
-1. Read the `## Current State` section at the top of `implementation-spec.md` to understand where the last session ended.
-2. Run `pytest` and confirm the suite is green. If tests are failing, treat fixing them as the first task before resuming planned work — log the fix as a diary entry.
-3. Review the `## Open Judgment Calls` section and note any that require user sign-off before proceeding.
-4. Read only the diary entries since the last `status: Complete` step to reorient; you do not need to re-read all prior entries.
-5. Continue from the `**next:**` field of the most recent diary entry.
+1. `git pull` if you may have pushed from another machine (see `docs/workflow.md`).
+2. Read the `## Current State` section at the top of `implementation-spec.md` to understand where the last session ended.
+3. Run `ff-status` or `pytest` and confirm the suite is green. If tests are failing, treat fixing them as the first task before resuming planned work — log the fix as a diary entry.
+4. Review the `## Open Judgment Calls` section and note any that require user sign-off before proceeding.
+5. Read only the diary entries since the last `status: Complete` step to reorient; you do not need to re-read all prior entries.
+6. Continue from the `**next:**` field of the most recent diary entry.
 
-Do not start new implementation work until steps 1–5 are satisfied.
+Do not start new implementation work until steps 1–6 are satisfied. At session end, follow `docs/workflow.md` and update **Current State** (or use the **fathomfollow-session-end** skill).
 
 ---
 

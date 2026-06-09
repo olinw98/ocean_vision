@@ -1,5 +1,24 @@
 # Implementation Spec: FathomFollow
 
+## Current State
+
+**Last updated:** 2026-06-09T03:45:00Z
+**Last completed step:** 1.3 — Pre-GS baseline (Bathochordaeus weights)
+**Test suite:** 61/61 passing | last run: 2026-06-09 (GPU build machine)
+**Active blockers:** HoloOcean (Epic EULA + GitHub install on Python 3.11; PyPI client fails on 3.13); `water_splatting` conda env not set up (Phase 1.5)
+**Next action:** Phase 1.5 — set up GS conda env, run `ff-gs train` + `ff-gs render`, merge with FathomNet, retrain detector, ablation vs `ablation_target_firing_rate` 2.12 in `docs/baselines.json`
+
+## Open Judgment Calls
+
+| Step | Timestamp | Decision | Status |
+|------|-----------|----------|--------|
+| 0.3 | 2026-06-08T13:00:00Z | Accept synthetic `smoke.npz` until HoloOcean EULA install completed on target machine | Open |
+| 1.5.2 | 2026-06-08T16:00:00Z | Stub render returns solid-color array when GS subprocess unavailable | Open |
+| 3.1 | 2026-06-08T19:00:00Z | SimpleTracker meets v1 test contract; upgrade to ByteTrack when real detection sequences available | Open |
+| 1.1 | 2026-06-08T23:30:00Z | Default auto-prepare to YOLO format; COCO path retained but known broken for some taxa in fathomnet-py 1.10 | Open |
+| 1.2 | 2026-06-09T00:30:00Z | Use Benthocodon for first live train to unblock pipeline; swap to Bathochordaeus before final ablation | Resolved: Bathochordaeus retrain complete 2026-06-09T03:30:00Z |
+| 0.3 / 1.3 | 2026-06-09T01:30:00Z | Proxy fixture uses real FathomNet RGB + synthetic IMU/DVL; honest interim baseline, not a HoloOcean substitute | Open |
+
 ## Critical Review
 
 ### Assumption Audit
