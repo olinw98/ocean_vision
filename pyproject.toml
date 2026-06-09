@@ -1,0 +1,51 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "fathomfollow"
+version = "0.1.0"
+description = "Simulation-based AUV visual follow with DVL-dropout navigation"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "numpy>=1.26,<3",
+    "pydantic>=2.7,<3",
+    "pyyaml>=6.0,<7",
+    "torch>=2.2,<3",
+    "ultralytics>=8.3,<9",
+    "filterpy>=1.4,<2",
+    "fathomnet>=1.5,<2",
+    "supervision>=0.24,<1",
+    "pillow>=10,<12",
+    "pyarrow>=15,<22",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8,<9",
+    "pytest-cov>=5,<7",
+]
+sim = [
+    # Install HoloOcean from GitHub after accepting Unreal EULA:
+    # pip install git+https://github.com/BYU-PCCL/holodeck.git@master#subdirectory=client
+]
+
+[project.scripts]
+ff-data = "fathomfollow.cli:main_data"
+ff-gs = "fathomfollow.cli:main_gs"
+ff-train-detector = "fathomfollow.cli:main_train_detector"
+ff-train-nav = "fathomfollow.cli:main_train_nav"
+ff-run = "fathomfollow.cli:main_run"
+ff-eval = "fathomfollow.cli:main_eval"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/fathomfollow"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"

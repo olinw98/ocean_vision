@@ -1,0 +1,8 @@
+path_id: default_orbit
+poses:
+  - position: [0.0, 0.0, -5.0]
+    orientation: [0.0, 0.0, 0.0, 1.0]
+  - position: [1.0, 0.0, -5.0]
+    orientation: [0.0, 0.1, 0.0, 0.995]
+  - position: [0.0, 1.0, -5.0]
+    orientation: [0.0, 0.0, 0.1, 0.995]

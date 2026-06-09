@@ -1,0 +1,15 @@
+name: default
+holoocean_scenario: PierHarbor-Hovering
+max_steps: 1000
+camera_width: 640
+camera_height: 480
+seed: 42
+dropout:
+  alt_min: 2.0
+  tilt_max_deg: 25.0
+  forced_windows: []
+target:
+  trajectory: circle
+  radius: 5.0
+  speed: 0.5
+  depth: -10.0

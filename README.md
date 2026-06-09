@@ -1,0 +1,16 @@
+# FathomFollow
+
+Simulation-based AUV visual follow with DVL-dropout navigation and offline Gaussian-splatting augmentation.
+
+See `implementation-plan.md` and `agent-prompt.md` for architecture and build contract.
+
+## Quick start
+
+```bash
+python -m venv .venv
+.venv\Scripts\activate
+pip install -e ".[dev]"
+pytest
+```
+
+HoloOcean requires a separate install from GitHub after accepting the Unreal EULA. GS training uses a separate conda env (see `implementation-spec.md`).
