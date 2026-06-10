@@ -38,5 +38,41 @@
       "fathomnet_proxy_firing_rate": 0.18,
       "note": "Dev proxy train on Benthocodon; superseded by Bathochordaeus"
     }
+  },
+  "gs_ablation": {
+    "recorded_at": "2026-06-10",
+    "method": "RecordedGSRenderer fallback — real WaterSplatting train not run (nerfstudio/tiny-cuda-nn blocked)",
+    "gs_render": {
+      "renderer": "RecordedGSRenderer",
+      "scene_checkpoint": "fixtures/gs/recorded",
+      "n_frames": 9,
+      "turbidity_values": [0.0, 0.3, 0.6],
+      "label_strategy": "composited-target"
+    },
+    "merge": {
+      "path": "data/fathomnet_merged",
+      "n_images": 1359,
+      "split_counts": {"train": 1094, "val": 139, "test": 126},
+      "sources": ["fathomnet", "gs_render"],
+      "leakage_check": "0 overlapping filenames across splits"
+    },
+    "retrain": {
+      "epochs": 4,
+      "weights": "runs/detect/train-3/weights/best.pt",
+      "mAP50": 0.650,
+      "mAP50-95": 0.427,
+      "metrics_path": "data/fathomnet_merged/metrics.json"
+    },
+    "fathomnet_proxy_ablation": {
+      "fixture": "fixtures/sim/fathomnet_proxy.npz",
+      "n_frames": 50,
+      "pre_gs_firing_rate": 2.12,
+      "pre_gs_weights": "runs/detect/train-2/weights/best.pt",
+      "post_gs_firing_rate": 0.82,
+      "post_gs_n_detections": 41,
+      "post_gs_weights": "runs/detect/train-3/weights/best.pt",
+      "delta_vs_ablation_target": -1.30,
+      "verdict": "null_result_regression"
+    }
   }
 }

@@ -2,11 +2,11 @@
 
 ## Current State
 
-**Last updated:** 2026-06-09T14:00:00Z
-**Last completed step:** PM — workflow tooling (ff-status, session-end skill, pm-cheatsheet, notion-setup); build step 1.3 still latest integration gate
-**Test suite:** 64/64 passing | last run: 2026-06-09 (Mac PM session)
-**Active blockers:** GitHub push blocked until `olin-wei-ai` has write access to `olinw98/ocean_vision`; HoloOcean (Epic + Py 3.11 on Windows); `water_splatting` conda env (Phase 1.5)
-**Next action (build machine):** Push workflow branch after collaborator access → Phase 1.5 GS conda, render, ablation vs 2.12
+**Last updated:** 2026-06-10T22:10:00Z
+**Last completed step:** GS conda stack — tinycudann + nerfstudio 1.1.4 + water-splatting editable install verified
+**Test suite:** 65/65 passing | last run: 2026-06-10 (Windows GPU session)
+**Active blockers:** HoloOcean (Epic + Py 3.11 on Windows); SeaThru-NeRF scene download for real `ff-gs train`; main `.venv` torch is CPU-only (CUDA reinstall optional for faster YOLO)
+**Next action:** Download SeaThru-NeRF scene → `ff-gs train`; HoloOcean on Py 3.11 for live sim baseline
 
 ## Open Judgment Calls
 
@@ -664,6 +664,42 @@ Two loops (perception→control, navigation) share HoloOcean via `SimEnv`. Offli
 **judgment_calls:** [JUDGMENT CALL] Notion is human dashboard only; git diary remains agent source of truth.
 **blockers:** [BLOCKED] GitHub write access for olin-wei-ai to push workflow branch.
 **next:** At home: grant collaborator access, push branch, merge to main; then GPU Phase 1.5
+<!-- /DIARY_ENTRY -->
+
+<!-- DIARY_ENTRY -->
+### [2026-06-10T20:30:00Z] Step 1.5.4 — Merge + retrain + ablation (RecordedGS session)
+
+**project:** FathomFollow
+**step:** 1.5.4
+**phase:** Phase 1.5
+**status:** Partial
+**files_touched:** docs/baselines.json, docs/gs_setup.md (pre-existing Windows notes verified), config/detector_train_merged.yaml, data/gs_renders/, data/gs_renders_yolo/, data/fathomnet_merged/, runs/detect/train-3/, runs/post_gs_ablation_batho.json, implementation-spec.md
+**tests_written:** n/a (manual integration)
+**tests_passing:** 65/65
+**summary:** `water_splatting` conda env exists (torch 2.1.2+cu118, CUDA OK) but nerfstudio/tiny-cuda-nn not installed — real GS train blocked on MSVC Build Tools. Ran `ff-gs render` with RecordedGSRenderer (9 turbidity-swept frames, valid YOLO labels). Merged fathomnet_batho + gs_render → 1359 images, 0 split leakage. 4-epoch retrain: mAP50=0.650 (was 0.644). Ablation on fathomnet_proxy (50 frames): firing_rate 0.82 vs pre-GS 2.12 (delta −1.30) — honest null regression; tiny synthetic GS batch + composited labels insufficient.
+**tdd_cycle:** n/a — integration measurement
+**deviations:** GS renders reorganized via reorganize_yolo_flat + manifest sources fix before merge (no dedicated CLI subcommand yet).
+**judgment_calls:** None
+**blockers:** [BLOCKED] Real WaterSplatting reconstruction — nerfstudio/tiny-cuda-nn need MSVC C++ Build Tools (see docs/gs_setup.md).
+**next:** Finish GS conda stack → real scene train/render batch; retry ablation; HoloOcean Py 3.11 smoke
+<!-- /DIARY_ENTRY -->
+
+<!-- DIARY_ENTRY -->
+### [2026-06-10T22:10:00Z] Step 1.5.2 — WaterSplatting conda stack complete (VS 2022)
+
+**project:** FathomFollow
+**step:** 1.5.2
+**phase:** Phase 1.5
+**status:** Complete
+**files_touched:** docs/gs_setup.md, implementation-spec.md; sibling clones `tiny-cuda-nn` (setup.py patches), `water-splatting` (editable install)
+**tests_written:** n/a (manual env verify)
+**tests_passing:** 65/65 (unchanged)
+**summary:** VS 2022 Build Tools installed. Built `tinycudann` from local clone via vcvars64 + conda CUDA_HOME + Windows Kits `rc.exe` on PATH; patched setup.py adds `-allow-unsupported-compiler` and `/D_ALLOW_COMPILER_AND_STL_VERSION_MISMATCH` for MSVC 14.44 + CUDA 11.8. Installed `nerfstudio==1.1.4` (pywinpty 2.0.13 wheel workaround). Editable `water-splatting` build via same vcvars + `NVCC_FLAGS`. Verified: `import tinycudann`, `import nerfstudio`, `import water_splatting`, `torch.cuda.is_available()==True`.
+**tdd_cycle:** n/a — env setup
+**deviations:** `ns-install-cli` needs `$HOME` set on Windows; full `cuda-toolkit` conda still fails path-length — minimal CUDA dev packages sufficient.
+**judgment_calls:** None
+**blockers:** [BLOCKED] SeaThru-NeRF scene download for first real `ff-gs train`; HoloOcean unchanged.
+**next:** Download SeaThru-NeRF scene → `ff-gs train` → real render batch → retry ablation
 <!-- /DIARY_ENTRY -->
 
 ## Final Spec
