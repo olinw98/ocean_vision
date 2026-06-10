@@ -1,0 +1,6 @@
+data_yaml: data/fathomnet_merged/data.yaml
+epochs: 4
+model: yolo11n.pt
+imgsz: 640
+batch: 8
+seed: 42
