@@ -15,6 +15,10 @@ This repo uses an agentic build contract. Before implementation work:
 
 **Multi-machine:** GPU build machine owns training/integration gates; git carries code + spec + baselines. See `docs/workflow.md`.
 
-**Skills:** `fathomfollow-resume` (session start), `fathomfollow-session-end` (session end).
+**Daily ritual:** `fathomfollow-daily-workflow` skill (start + end + PM vs builder chats).
+
+**Skills:** `fathomfollow-resume` (deep catch-up), `fathomfollow-session-end` (wrap-up), `fathomfollow-daily-workflow` (routine).
+
+**Human cheat sheet:** `docs/pm-cheatsheet.md`
 
 Standing rules from `agent-prompt.md`: no HoloOcean/GS in unit tests; no ground truth outside `src/fathomfollow/eval/`.

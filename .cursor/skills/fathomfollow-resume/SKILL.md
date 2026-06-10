@@ -15,7 +15,7 @@ Orient the user (and yourself) before coding. **Read live state** — never quot
 ## Read first (in order)
 
 1. `agent-prompt.md` — build contract, TDD, diary rules
-2. `implementation-spec.md` — **Implementation Log** (latest `DIARY_ENTRY` blocks) + Revised Blueprint blockers
+2. `implementation-spec.md` — **Current State** first, then latest `DIARY_ENTRY` blocks if needed
 3. `docs/baselines.json` — recorded metrics and ablation targets
 4. `implementation-plan.md` — **read only** for phase names/acceptance; **do not edit**
 
@@ -132,8 +132,10 @@ If conda/GPU/HoloOcean unavailable, recommend the highest-value **offline** step
 
 ## Related
 
+- Full daily routine: **fathomfollow-daily-workflow** skill
 - Session end: **fathomfollow-session-end** skill
 - Multi-machine roles: `docs/workflow.md`
+- Human one-pager: `docs/pm-cheatsheet.md`
 
 ## Trigger phrases
 

@@ -1,6 +1,6 @@
 # FathomFollow — PM cheat sheet
 
-One-page reference for you (human PM). Agents use `agent-prompt.md` and `docs/workflow.md`.
+One-page reference for you (human PM). Agents use `agent-prompt.md`, `docs/workflow.md`, and the **fathomfollow-daily-workflow** Cursor skill.
 
 ## Which machine?
 
@@ -15,7 +15,11 @@ One-page reference for you (human PM). Agents use `agent-prompt.md` and `docs/wo
 2. Activate venv (Windows: `.venv\Scripts\activate` · Mac: `source .venv/bin/activate`)
 3. `ff-status`
 4. Open `implementation-spec.md` → **Current State**
-5. Tell Cursor: *"Resume FathomFollow"* or paste **Next action**
+5. **PM chat:** *"Resume FathomFollow"* (recap) · **Builder chat:** paste **Next action** as the task
+
+**Which chat?** PM = plan/review/explain · Builder Agent = implement/train/fix
+
+Cursor skill with full steps: **fathomfollow-daily-workflow**
 
 ## Session end (build machine)
 

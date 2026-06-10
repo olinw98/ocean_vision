@@ -72,3 +72,4 @@ Close the loop so the next session (or machine) can resume without guesswork.
 - Do not edit `implementation-plan.md`.
 - On a **PM-only machine** (no GPU artifacts), skip artifact-dependent steps; still update spec if workflow docs changed.
 - See `docs/workflow.md` for multi-machine roles.
+- Full daily routine: **fathomfollow-daily-workflow** skill.
