@@ -39,9 +39,39 @@
       "note": "Dev proxy train on Benthocodon; superseded by Bathochordaeus"
     }
   },
+  "gs_real_train_render": {
+    "recorded_at": "2026-06-11",
+    "scene": "IUI3-RedSea",
+    "source_path": "data/seathrunerf/SeathruNeRF_dataset/IUI3-RedSea",
+    "n_source_images": 29,
+    "train": {
+      "command": "ff-gs train --max-iterations 15000",
+      "iterations": 15000,
+      "eval_psnr_all_images": 31.999,
+      "eval_psnr_per_image": 36.747,
+      "train_psnr": 36.107,
+      "scene_manifest": "models/gs/iui3-redsea/scene.json",
+      "colmap_cameras": "models/gs/iui3-redsea/colmap_cameras.json",
+      "config": "models/gs/train_outputs/iui3-redsea/water-splatting/2026-06-10_193911/config.yml",
+      "checkpoint": "models/gs/train_outputs/iui3-redsea/water-splatting/2026-06-10_193911/nerfstudio_models/step-000014999.ckpt",
+      "prior_3000_iter_eval_psnr": 21.03
+    },
+    "render": {
+      "renderer": "WaterSplattingGSRenderer (ns-render camera-path)",
+      "config": "config/render_real.yaml",
+      "camera_path": "config/cam_path_iui3.yaml",
+      "out_dir": "data/gs_renders_real",
+      "n_frames": 9,
+      "resolution": "685x456",
+      "turbidity_values": [0.0, 0.3, 0.6],
+      "label_strategy": "composited-target",
+      "visual_qa": "pass — reef/rock structure visible at 15000 iter with COLMAP-aligned cameras",
+      "note": "Turbidity >0 via post-render blue-channel tint; synthetic cam_path.yaml alone produced muddy blobs"
+    }
+  },
   "gs_ablation": {
     "recorded_at": "2026-06-10",
-    "method": "RecordedGSRenderer fallback — real WaterSplatting train not run (nerfstudio/tiny-cuda-nn blocked)",
+    "method": "RecordedGSRenderer stub only (fixtures/gs/recorded) — NOT real WaterSplatting; see gs_real_train_render for real GS",
     "gs_render": {
       "renderer": "RecordedGSRenderer",
       "scene_checkpoint": "fixtures/gs/recorded",

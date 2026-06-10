@@ -25,8 +25,8 @@ from fathomfollow.eval.report import generate_report
 from fathomfollow.eval.run_eval import evaluate_run
 from fathomfollow.nav.training import train_nav_estimator
 from fathomfollow.perception.detector import metrics_from_train_results
-from fathomfollow.gs.base import Pose
-from fathomfollow.gs.recorded import RecordedGSRenderer
+from fathomfollow.gs.base import GSRenderer, Pose
+from fathomfollow.gs.recorded import GSScene, RecordedGSRenderer
 from fathomfollow.gs.render_pipeline import render_labeled_batch
 from fathomfollow.gs.watersplatting import WaterSplattingGSRenderer
 from fathomfollow.run import run_orchestration
@@ -96,6 +96,20 @@ def main_data() -> None:
         merge_datasets(sources, args.out)
 
 
+def _load_gs_renderer(scene_checkpoint: Path) -> GSRenderer:
+    ckpt = Path(scene_checkpoint)
+    scene_json = ckpt / "scene.json" if ckpt.is_dir() else ckpt.parent / "scene.json"
+    if scene_json.is_file():
+        scene = GSScene.load(scene_json)
+        if scene.library == "watersplatting":
+            renderer = WaterSplattingGSRenderer()
+            renderer.load(str(ckpt))
+            return renderer
+    renderer = RecordedGSRenderer(ckpt)
+    renderer.load(str(ckpt))
+    return renderer
+
+
 def main_gs() -> None:
     parser = argparse.ArgumentParser(prog="ff-gs")
     sub = parser.add_subparsers(dest="cmd", required=True)
@@ -104,6 +118,7 @@ def main_gs() -> None:
     train_p.add_argument("--source", type=Path, required=True)
     train_p.add_argument("--out", type=Path, required=True)
     train_p.add_argument("--library", type=str, default="watersplatting")
+    train_p.add_argument("--max-iterations", type=int, default=3000)
 
     render_p = sub.add_parser("render")
     render_p.add_argument("--config", type=Path, required=True)
@@ -111,12 +126,22 @@ def main_gs() -> None:
     args = parser.parse_args()
     if args.cmd == "train":
         renderer = WaterSplattingGSRenderer()
-        scene = renderer.train_subprocess(args.source, args.out)
-        print(json.dumps({"scene_id": scene.scene_id, "checkpoint": scene.checkpoint_path}))
+        scene = renderer.train_subprocess(
+            args.source, args.out, max_iterations=args.max_iterations
+        )
+        print(
+            json.dumps(
+                {
+                    "scene_id": scene.scene_id,
+                    "checkpoint": scene.checkpoint_path,
+                    "train_psnr": scene.train_psnr,
+                }
+            )
+        )
     elif args.cmd == "render":
         cfg = load_yaml_model(args.config, RenderConfig)
         cam = load_yaml_model(cfg.camera_path, CameraPathConfig)
-        renderer = RecordedGSRenderer(cfg.scene_checkpoint)
+        renderer = _load_gs_renderer(cfg.scene_checkpoint)
         renderer.load(str(cfg.scene_checkpoint))
         poses = [
             Pose(tuple(p.position), tuple(p.orientation))  # type: ignore[arg-type]

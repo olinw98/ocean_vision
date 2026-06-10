@@ -2,11 +2,11 @@
 
 ## Current State
 
-**Last updated:** 2026-06-10T22:10:00Z
-**Last completed step:** GS conda stack — tinycudann + nerfstudio 1.1.4 + water-splatting editable install verified
-**Test suite:** 65/65 passing | last run: 2026-06-10 (Windows GPU session)
-**Active blockers:** HoloOcean (Epic + Py 3.11 on Windows); SeaThru-NeRF scene download for real `ff-gs train`; main `.venv` torch is CPU-only (CUDA reinstall optional for faster YOLO)
-**Next action:** Download SeaThru-NeRF scene → `ff-gs train`; HoloOcean on Py 3.11 for live sim baseline
+**Last updated:** 2026-06-11T00:00:00Z
+**Last completed step:** Step 1.5.2/1.5.3 — IUI3-RedSea WaterSplatting 15000-iter train + COLMAP-aligned render batch (visual QA pass)
+**Test suite:** 65/65 passing | last run: 2026-06-11 (Windows GPU session)
+**Active blockers:** HoloOcean (Epic + Py 3.11 on Windows); main `.venv` torch is CPU-only (CUDA reinstall optional for faster YOLO)
+**Next action:** `ff-data merge` fathomnet_batho + `data/gs_renders_real` → detector retrain → ablation vs 2.12
 
 ## Open Judgment Calls
 
@@ -700,6 +700,42 @@ Two loops (perception→control, navigation) share HoloOcean via `SimEnv`. Offli
 **judgment_calls:** None
 **blockers:** [BLOCKED] SeaThru-NeRF scene download for first real `ff-gs train`; HoloOcean unchanged.
 **next:** Download SeaThru-NeRF scene → `ff-gs train` → real render batch → retry ablation
+<!-- /DIARY_ENTRY -->
+
+<!-- DIARY_ENTRY -->
+### [2026-06-10T23:55:00Z] Step 1.5.2/1.5.3 — Real WaterSplatting train + render (IUI3-RedSea)
+
+**project:** FathomFollow
+**step:** 1.5.2 / 1.5.3
+**phase:** Phase 1.5
+**status:** Partial
+**files_touched:** src/fathomfollow/gs/watersplatting.py, src/fathomfollow/cli.py, config/render_real.yaml, data/seathrunerf/, models/gs/, data/gs_renders_real/, implementation-spec.md
+**tests_written:** n/a (manual integration; unit suite unchanged)
+**tests_passing:** 65/65
+**summary:** Downloaded SeaThru-NeRF scenes (623 MB Google Drive) → `SeathruNeRF_dataset/IUI3-RedSea` (29 images, COLMAP sparse/0). Fixed GS stack blockers on Windows: `fpsample==0.3.2` (1.0.2 import crash), pre-cached alexnet LPIPS weights (Py3.8 SSL), PIL pre-downscale (`Images_wb_2`), conda-forge `ffmpeg` on PATH (`Library/bin`). `ff-gs train` 3000 iterations → eval PSNR ~21.03 (tensorboard). `ff-gs render` with `WaterSplattingGSRenderer` + `config/render_real.yaml` → 9 labeled frames at `data/gs_renders_real` (3 poses × 3 turbidity, composited-target labels). Stopped before merge/retrain/ablation per plan.
+**tdd_cycle:** n/a — integration gate
+**deviations:** 3000-iter train (not full 15000); turbidity sweep via post-render tint on real GS RGB (medium not re-simulated per pose).
+**judgment_calls:** None
+**blockers:** None new (HoloOcean unchanged)
+**next:** Merge `fathomnet_batho` + `gs_renders_real` → retrain → ablation vs 2.12; optional full 15000-iter GS retrain for quality
+<!-- /DIARY_ENTRY -->
+
+<!-- DIARY_ENTRY -->
+### [2026-06-11T00:00:00Z] Step 1.5.2/1.5.3 — 15000-iter retrain + COLMAP-aligned re-render
+
+**project:** FathomFollow
+**step:** 1.5.2 / 1.5.3
+**phase:** Phase 1.5
+**status:** Partial
+**files_touched:** src/fathomfollow/cli.py, src/fathomfollow/gs/watersplatting.py, config/render_real.yaml, config/cam_path_iui3.yaml, docs/baselines.json, docs/gs_setup.md, implementation-spec.md, models/gs/iui3-redsea/, data/gs_renders_real/
+**tests_written:** n/a
+**tests_passing:** 65/65
+**summary:** Manager QA flagged 3000-iter renders as muddy blobs (synthetic `cam_path.yaml` poses misaligned with scene). Re-ran `ff-gs train` at 15000 iter → eval PSNR 31.999 (all images), 36.747 (per-image). Added `export_colmap_cameras_json`, `colmap_cameras.json`, and `config/cam_path_iui3.yaml` (first 3 training cameras). Re-rendered 9 frames at 685×456 with aligned extrinsics/intrinsics — visual QA pass (reef/rock structure visible). Removed duplicate import in cli.py. Committed code/docs; no merge/retrain/ablation.
+**tdd_cycle:** n/a — integration + render alignment fix
+**deviations:** Turbidity sweep still post-render tint; composited-target labels unchanged.
+**judgment_calls:** None
+**blockers:** None new
+**next:** `ff-data merge` + detector retrain + ablation vs 2.12
 <!-- /DIARY_ENTRY -->
 
 ## Final Spec

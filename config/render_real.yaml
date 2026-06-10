@@ -1,0 +1,6 @@
+scene_checkpoint: models/gs/iui3-redsea
+camera_path: config/cam_path_iui3.yaml
+turbidity_values: [0.0, 0.3, 0.6]
+label_strategy: composited-target
+out_dir: data/gs_renders_real
+seed: 42

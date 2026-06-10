@@ -21,6 +21,11 @@ Reinstall if needed: `pip install torch torchvision --index-url https://download
 - **`nerfstudio==1.1.4`:** installed (preinstall `pywinpty==2.0.13` + `pywin32==306` wheels before pip)
 - **`water-splatting` pip install -e .:** installed (same vcvars + `NVCC_FLAGS=-allow-unsupported-compiler -Xcompiler=/D_ALLOW_COMPILER_AND_STL_VERSION_MISMATCH`)
 - **`ns-install-cli`:** run once; set `HOME=%USERPROFILE%` if it exits early on Windows
+- **`fpsample`:** pin `fpsample==0.3.2` in `water_splatting` env (`1.0.2` can crash `ns-train` on Windows)
+- **`ffmpeg`:** `conda install -n water_splatting -c conda-forge ffmpeg` (needed by `ns-render`; binary is under `envs/water_splatting/Library/bin`)
+- **LPIPS / alexnet:** if Py3.8 SSL fails downloading weights, cache manually to `%USERPROFILE%\.cache\torch\hub\checkpoints\alexnet-owt-7be5be79.pth`
+- **SeaThru-NeRF data:** Google Drive id `1RzojBFvBWjUUhuJb95xJPSNP3nJwZWaT` → extract under `data/seathrunerf/SeathruNeRF_dataset/` (scene `IUI3-RedSea` used for first train)
+- **Render alignment:** use COLMAP training cameras (`config/cam_path_iui3.yaml` + `models/gs/<scene>/colmap_cameras.json`); generic `cam_path.yaml` orbit poses produce blurry off-scene renders
 
 ## Create env
 
