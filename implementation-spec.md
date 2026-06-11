@@ -2,11 +2,11 @@
 
 ## Current State
 
-**Last updated:** 2026-06-11T12:00:00Z
-**Last completed step:** Step 0.3 — HoloOcean live smoke + sim-frame detector baseline on `holoocean_smoke.npz` (firing_rate 0.58)
+**Last updated:** 2026-06-11T18:00:00Z
+**Last completed step:** Step 1.5.4 — Real GS merge + retrain (train-4) + ablation vs proxy 2.12 and HoloOcean 0.58 → regression on both fixtures
 **Test suite:** 68/68 passing | last run: 2026-06-11 (Python 3.11 venv)
-**Active blockers:** None for HoloOcean; optional CUDA torch in `.venv` for faster YOLO
-**Next action:** `ff-data merge` fathomnet_batho + `data/gs_renders_real` → detector retrain → ablation vs proxy 2.12 and HoloOcean 0.58
+**Active blockers:** None for HoloOcean; GS sim-transfer hypothesis not supported at current batch size (9 frames)
+**Next action:** Phase 2 drift gate on `holoocean_smoke.npz` with train-2 weights (pre-GS baseline path), or expand GS render batch before another merge/retrain
 
 ## Open Judgment Calls
 
@@ -30,7 +30,7 @@
 | HoloOcean DVL/IMU API names and shapes | RISKY | DVL global-frame 3-vel; IMU up to 18-D — map in HoloOceanSimEnv |
 | Textured mimic resembles taxon enough | UNKNOWN | Start with proxy mesh; iterate visually |
 | Sim throughput for Phases 2–4 | RISKY | Headless for nav; rendered only for perception |
-| GS imagery transfers better than FathomNet alone | UNKNOWN (hypothesis) | Step 1.5.4 ablation; null result valid |
+| GS imagery transfers better than FathomNet alone | RISKY (not supported at 9 frames) | Step 1.5.4 real GS ablation: proxy 2.12→0.46, HoloOcean 0.58→0.0 (train-4) |
 | SeaThru-NeRF ships usable poses | SAFE (with nuance) | COLMAP sparse/0 + poses_bounds.npy bundled |
 | Target organism appears in GS scene | RISKY | Composited-target likely; decide at Step 1.5.2 |
 | Single Python env for HoloOcean + WaterSplatting + YOLO | RISKY | Dual-env: main 3.11 + water_splatting conda 3.8 |
@@ -754,6 +754,24 @@ Two loops (perception→control, navigation) share HoloOcean via `SimEnv`. Offli
 **judgment_calls:** Resolved synthetic-smoke and proxy interim judgments (see Open Judgment Calls)
 **blockers:** None
 **next:** GS merge + retrain + ablation (proxy 2.12 vs HoloOcean 0.58)
+<!-- /DIARY_ENTRY -->
+
+<!-- DIARY_ENTRY -->
+### [2026-06-11T18:00:00Z] Step 1.5.4 — Real GS merge + retrain + ablation
+
+**project:** FathomFollow
+**step:** 1.5.4
+**phase:** Phase 1.5
+**status:** Complete
+**files_touched:** data/gs_renders_real_yolo/, data/fathomnet_merged/, runs/detect/train-4/, runs/post_gs_ablation_proxy_real_gs.json, runs/post_gs_ablation_holoocean_real_gs.json, docs/baselines.json, implementation-spec.md
+**tests_written:** n/a — Task 3 regression already covered by `test_find_rgb_key_prefers_left_camera`, `test_map_holoocean_state_rgba_camera`, `test_scenario_config_from_repo` (no duplicate added)
+**tests_passing:** 68/68
+**summary:** Reorganized 9 real GS frames → `data/gs_renders_real_yolo` (sources gs_render). `ff-data merge` fathomnet_batho + gs_renders_real_yolo → 1359 images, splits train/val/test 1094/139/126 manifest, 0 leakage. Retrain 4 epochs on CPU (train-4): mAP50 **0.657**, mAP50-95 **0.416** (+0.013 mAP50 vs train-2). Ablation with train-4/best.pt: fathomnet_proxy firing_rate **0.46** (pre 2.12, Δ−1.66); holoocean_smoke **0.0** (pre 0.58, Δ−0.58). Honest **regression** — val mAP uptick did not transfer to sim fixtures; 9 composited frames insufficient.
+**tdd_cycle:** n/a — integration measurement; HoloOcean mapping regressions already in unit suite from Step 0.3 commit
+**deviations:** CPU retrain (~11 min); GPU optional for speed only
+**judgment_calls:** None
+**blockers:** None
+**next:** Phase 2 drift gate on holoocean_smoke with train-2 weights; or larger GS render batch before retry merge
 <!-- /DIARY_ENTRY -->
 
 ## Final Spec
