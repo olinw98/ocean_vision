@@ -2,22 +2,22 @@
 
 ## Current State
 
-**Last updated:** 2026-06-11T00:00:00Z
-**Last completed step:** Step 1.5.2/1.5.3 — IUI3-RedSea WaterSplatting 15000-iter train + COLMAP-aligned render batch (visual QA pass)
-**Test suite:** 65/65 passing | last run: 2026-06-11 (Windows GPU session)
-**Active blockers:** HoloOcean (Epic + Py 3.11 on Windows); main `.venv` torch is CPU-only (CUDA reinstall optional for faster YOLO)
-**Next action:** `ff-data merge` fathomnet_batho + `data/gs_renders_real` → detector retrain → ablation vs 2.12
+**Last updated:** 2026-06-11T12:00:00Z
+**Last completed step:** Step 0.3 — HoloOcean live smoke + sim-frame detector baseline on `holoocean_smoke.npz` (firing_rate 0.58)
+**Test suite:** 68/68 passing | last run: 2026-06-11 (Python 3.11 venv)
+**Active blockers:** None for HoloOcean; optional CUDA torch in `.venv` for faster YOLO
+**Next action:** `ff-data merge` fathomnet_batho + `data/gs_renders_real` → detector retrain → ablation vs proxy 2.12 and HoloOcean 0.58
 
 ## Open Judgment Calls
 
 | Step | Timestamp | Decision | Status |
 |------|-----------|----------|--------|
-| 0.3 | 2026-06-08T13:00:00Z | Accept synthetic `smoke.npz` until HoloOcean EULA install completed on target machine | Open |
+| 0.3 | 2026-06-08T13:00:00Z | Accept synthetic `smoke.npz` until HoloOcean EULA install completed on target machine | Resolved: live `holoocean_smoke.npz` recorded 2026-06-11 |
 | 1.5.2 | 2026-06-08T16:00:00Z | Stub render returns solid-color array when GS subprocess unavailable | Open |
 | 3.1 | 2026-06-08T19:00:00Z | SimpleTracker meets v1 test contract; upgrade to ByteTrack when real detection sequences available | Open |
 | 1.1 | 2026-06-08T23:30:00Z | Default auto-prepare to YOLO format; COCO path retained but known broken for some taxa in fathomnet-py 1.10 | Open |
 | 1.2 | 2026-06-09T00:30:00Z | Use Benthocodon for first live train to unblock pipeline; swap to Bathochordaeus before final ablation | Resolved: Bathochordaeus retrain complete 2026-06-09T03:30:00Z |
-| 0.3 / 1.3 | 2026-06-09T01:30:00Z | Proxy fixture uses real FathomNet RGB + synthetic IMU/DVL; honest interim baseline, not a HoloOcean substitute | Open |
+| 0.3 / 1.3 | 2026-06-09T01:30:00Z | Proxy fixture uses real FathomNet RGB + synthetic IMU/DVL; honest interim baseline, not a HoloOcean substitute | Resolved: HoloOcean live baseline recorded; proxy retained for comparison |
 | PM | 2026-06-09T14:00:00Z | Notion is human dashboard only; git diary remains agent source of truth | Open |
 
 ## Critical Review
@@ -736,6 +736,24 @@ Two loops (perception→control, navigation) share HoloOcean via `SimEnv`. Offli
 **judgment_calls:** None
 **blockers:** None new
 **next:** `ff-data merge` + detector retrain + ablation vs 2.12
+<!-- /DIARY_ENTRY -->
+
+<!-- DIARY_ENTRY -->
+### [2026-06-11T12:00:00Z] Step 0.3 — HoloOcean live smoke (integration gate)
+
+**project:** FathomFollow
+**step:** 0.3
+**phase:** Phase 0
+**status:** Complete
+**files_touched:** docs/baselines.json, docs/holoocean_install.md, fixtures/sim/holoocean_smoke.npz, implementation-spec.md, runs/pre_gs_baseline_holoocean.json; `.venv` recreated on Python 3.11
+**tests_written:** n/a (unit tests unchanged; HoloOcean not in pytest)
+**tests_passing:** 68/68
+**summary:** Recreated project `.venv` on Python 3.11 (3.13 incompatible with holoocean pywin32). Installed `holoocean==2.3.0` from sibling `../holoocean/client`; Ocean worlds already present. Live smoke: `PierHarbor-HoveringCamera`, 100 frames → `fixtures/sim/holoocean_smoke.npz` (512×512 RGB). Bathochordaeus `train-2/best.pt` baseline: firing_rate **0.58** (58 dets / 100 frames). Recorded in `docs/baselines.json` and `runs/pre_gs_baseline_holoocean.json`.
+**tdd_cycle:** n/a — manual integration gate
+**deviations:** None
+**judgment_calls:** Resolved synthetic-smoke and proxy interim judgments (see Open Judgment Calls)
+**blockers:** None
+**next:** GS merge + retrain + ablation (proxy 2.12 vs HoloOcean 0.58)
 <!-- /DIARY_ENTRY -->
 
 ## Final Spec

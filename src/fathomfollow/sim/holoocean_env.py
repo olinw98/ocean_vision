@@ -38,14 +38,42 @@ def extract_imu_6(raw_imu: np.ndarray) -> np.ndarray:
     raise ValueError(f"IMU vector too short: {arr.size}")
 
 
+def flatten_holoocean_state(state: dict[str, Any]) -> dict[str, Any]:
+    """Normalize HoloOcean 2.x state to a flat sensor-name dict."""
+    if not state:
+        return state
+    # Multi-agent: pick first agent sub-dict that carries sensor arrays.
+    agent_states = [
+        v for v in state.values() if isinstance(v, dict) and any(isinstance(x, np.ndarray) for x in v.values())
+    ]
+    if agent_states:
+        return agent_states[0]
+    return state
+
+
+def find_rgb_key(state: dict[str, Any]) -> str | None:
+    preferred = ("LeftCamera", "FrontCamera", "RGBCamera", "RightCamera")
+    for name in preferred:
+        if name in state:
+            return name
+    return next((k for k in state if "Camera" in k or "RGB" in k.upper()), None)
+
+
 def map_holoocean_state(state: dict[str, Any], t: float) -> SimObservation:
     """Map raw HoloOcean state dict to SimObservation."""
-    rgb_key = next((k for k in state if "Camera" in k or "RGB" in k), None)
+    state = flatten_holoocean_state(state)
+    rgb_key = find_rgb_key(state)
     if rgb_key is None:
-        raise KeyError("no RGB camera key in HoloOcean state")
+        keys = sorted(k for k in state if k != "t")
+        raise KeyError(
+            f"no RGB camera key in HoloOcean state (keys={keys}). "
+            "Use a camera-equipped scenario such as PierHarbor-HoveringCamera."
+        )
     rgb = np.asarray(state[rgb_key], dtype=np.uint8)
     if rgb.ndim == 2:
         rgb = np.stack([rgb] * 3, axis=-1)
+    elif rgb.ndim == 3 and rgb.shape[-1] == 4:
+        rgb = rgb[:, :, :3]
 
     imu_raw = np.asarray(state["IMUSensor"], dtype=np.float32)
     imu = extract_imu_6(imu_raw)
@@ -98,17 +126,19 @@ def rpy_to_quat(rpy: np.ndarray) -> np.ndarray:
 class HoloOceanSimEnv:
     """Live HoloOcean environment (requires holoocean installed)."""
 
-    def __init__(self, scenario: str = "PierHarbor-Hovering") -> None:
+    def __init__(self, scenario: str = "PierHarbor-HoveringCamera") -> None:
         import holoocean
 
         self._env = holoocean.make(scenario)
         self._t = 0.0
         self._dt = 0.033
+        self._last_rgb: np.ndarray | None = None
 
     def reset(self) -> SimObservation:
         self._t = 0.0
+        self._last_rgb = None
         self._env.reset()
-        return self._blank_obs()
+        return self._initial_obs()
 
     def step(self, command: "Command") -> SimObservation:
         from fathomfollow.sim.base import Command
@@ -117,7 +147,15 @@ class HoloOceanSimEnv:
         thruster = self._command_to_thrusters(command)
         state = self._env.step(thruster)
         self._t += self._dt
-        return map_holoocean_state(state, self._t)
+        return self._observe(state)
+
+    def _observe(self, state: dict[str, Any]) -> SimObservation:
+        flat = flatten_holoocean_state(state)
+        if find_rgb_key(flat) is None and self._last_rgb is not None:
+            flat = {**flat, "LeftCamera": self._last_rgb}
+        obs = map_holoocean_state(flat, self._t)
+        self._last_rgb = obs.rgb.copy()
+        return obs
 
     def close(self) -> None:
         self._env.__exit__(None, None, None)
@@ -129,12 +167,7 @@ class HoloOceanSimEnv:
         vert = command.vertical_vel * 3.0
         return np.array([fwd + yaw, fwd - yaw, fwd + vert, fwd - vert, 0, 0, 0, 0])
 
-    def _blank_obs(self) -> SimObservation:
-        state = {}
-        for key in ("FrontCamera", "RGBCamera", "IMUSensor", "DVLSensor", "PoseSensor"):
-            try:
-                state = self._env.step(np.zeros(8))
-                break
-            except Exception:
-                continue
-        return map_holoocean_state(state, self._t)
+    def _initial_obs(self) -> SimObservation:
+        """First observation after reset (HoloOcean returns sensors on first tick)."""
+        state = self._env.step(np.zeros(8))
+        return self._observe(state)

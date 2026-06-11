@@ -29,10 +29,24 @@
         "n_detections": 106,
         "n_frames": 50,
         "weights": "runs/detect/train-2/weights/best.pt",
-        "note": "Real FathomNet RGB in sim harness; primary ablation target until HoloOcean fixture exists"
+        "note": "Real FathomNet RGB in sim harness; proxy ablation reference (not live HoloOcean)"
+      },
+      "holoocean_smoke": {
+        "path": "fixtures/sim/holoocean_smoke.npz",
+        "firing_rate": 0.58,
+        "n_detections": 58,
+        "n_frames": 100,
+        "weights": "runs/detect/train-2/weights/best.pt",
+        "scenario": "PierHarbor-HoveringCamera",
+        "holoocean_version": "2.3.0",
+        "rgb_shape": [512, 512, 3],
+        "recorded_at": "2026-06-11",
+        "metrics_path": "runs/pre_gs_baseline_holoocean.json",
+        "note": "Live HoloOcean smoke; first real sim-frame detector baseline on Unreal RGB"
       }
     },
     "ablation_target_firing_rate": 2.12,
+    "ablation_target_note": "2.12 is fathomnet_proxy (50 frames); live HoloOcean firing_rate 0.58 on 100 frames — use both when interpreting GS ablation",
     "prior_benthocodon_dev": {
       "mAP50": 0.764,
       "fathomnet_proxy_firing_rate": 0.18,

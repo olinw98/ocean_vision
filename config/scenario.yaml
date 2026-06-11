@@ -1,5 +1,5 @@
 name: default
-holoocean_scenario: PierHarbor-Hovering
+holoocean_scenario: PierHarbor-HoveringCamera
 max_steps: 1000
 camera_width: 640
 camera_height: 480

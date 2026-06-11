@@ -26,7 +26,7 @@ class TargetMimicConfig(BaseModel):
 
 class ScenarioConfig(BaseModel):
     name: str = "default"
-    holoocean_scenario: str = "PierHarbor-Hovering"
+    holoocean_scenario: str = "PierHarbor-HoveringCamera"
     max_steps: int = Field(1000, ge=1)
     camera_width: int = Field(640, ge=32)
     camera_height: int = Field(480, ge=32)

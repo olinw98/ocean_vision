@@ -2,6 +2,8 @@ import numpy as np
 
 from fathomfollow.sim.holoocean_env import (
     extract_imu_6,
+    find_rgb_key,
+    flatten_holoocean_state,
     global_to_body_velocity,
     map_holoocean_state,
 )
@@ -24,10 +26,38 @@ def test_global_to_body_velocity_identity() -> None:
     np.testing.assert_allclose(body, vel, atol=1e-5)
 
 
+def test_find_rgb_key_prefers_left_camera() -> None:
+    state = {"RightCamera": np.zeros(1), "LeftCamera": np.zeros(1)}
+    assert find_rgb_key(state) == "LeftCamera"
+
+
+def test_map_holoocean_state_rgba_camera() -> None:
+    rgba = np.zeros((480, 640, 4), dtype=np.uint8)
+    state = {
+        "LeftCamera": rgba,
+        "IMUSensor": np.zeros(18, dtype=np.float32),
+        "DVLSensor": np.array([1.0, 0.0, 0.0, 10, 10, 10, 10], dtype=np.float64),
+        "PoseSensor": np.zeros(18, dtype=np.float64),
+    }
+    obs = map_holoocean_state(state, t=0.0)
+    assert obs.rgb.shape == (480, 640, 3)
+
+
+def test_flatten_holoocean_state_multi_agent() -> None:
+    nested = {
+        "auv0": {
+            "LeftCamera": np.zeros((2, 2, 3), dtype=np.uint8),
+            "IMUSensor": np.zeros(6, dtype=np.float32),
+        }
+    }
+    flat = flatten_holoocean_state(nested)
+    assert "LeftCamera" in flat
+
+
 def test_map_holoocean_state_mock() -> None:
     rgb = np.zeros((480, 640, 3), dtype=np.uint8)
     state = {
-        "FrontCamera": rgb,
+        "LeftCamera": rgb,
         "IMUSensor": np.zeros(18, dtype=np.float32),
         "DVLSensor": np.array([1.0, 0.0, 0.0, 10, 10, 10, 10], dtype=np.float64),
         "PoseSensor": np.zeros(18, dtype=np.float64),

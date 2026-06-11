@@ -8,7 +8,7 @@ from fathomfollow.sim.target import target_position_at
 
 def test_scenario_config_from_repo() -> None:
     cfg = load_yaml_model(Path("config/scenario.yaml"), ScenarioConfig)
-    assert cfg.holoocean_scenario == "PierHarbor-Hovering"
+    assert cfg.holoocean_scenario == "PierHarbor-HoveringCamera"
 
 
 def test_target_trajectory_deterministic() -> None:
