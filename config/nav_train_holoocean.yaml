@@ -1,0 +1,7 @@
+trajectories_dir: data/trajectories_holoocean
+epochs: 50
+arch: gru
+window_size: 20
+hidden_size: 64
+lr: 0.001
+seed: 42

@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from pathlib import Path
+
 import numpy as np
 import torch
 import torch.nn as nn
@@ -39,6 +41,13 @@ class VelocityEstimator:
         with torch.no_grad():
             vel = self._model(t).cpu().numpy()[0]
         return vel.astype(np.float32)
+
+    def load(self, checkpoint: Path | str) -> None:
+        path = Path(checkpoint)
+        state = torch.load(path, map_location=self._device, weights_only=True)
+        hidden_size = int(state["head.weight"].shape[1])
+        self._model = VelocityGRU(input_size=9, hidden_size=hidden_size)
+        self._model.load_state_dict(state)
 
     def train_step(self, batch_x: torch.Tensor, batch_y: torch.Tensor) -> float:
         self._model.train()

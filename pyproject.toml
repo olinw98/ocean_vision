@@ -38,6 +38,7 @@ ff-train-detector = "fathomfollow.cli:main_train_detector"
 ff-train-nav = "fathomfollow.cli:main_train_nav"
 ff-run = "fathomfollow.cli:main_run"
 ff-eval = "fathomfollow.cli:main_eval"
+ff-drift-gate = "fathomfollow.cli:main_drift_gate"
 ff-status = "fathomfollow.project_status:main_status"
 
 [tool.hatch.build.targets.wheel]

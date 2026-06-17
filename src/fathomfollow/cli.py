@@ -22,7 +22,7 @@ from fathomfollow.data.merge import merge_datasets
 from fathomfollow.data.pipeline import CANDIDATE_TAXA, prepare_from_coco
 from fathomfollow.eval.metrics import gs_ablation_table
 from fathomfollow.eval.report import generate_report
-from fathomfollow.eval.run_eval import evaluate_run
+from fathomfollow.nav.drift_gate import run_drift_gate
 from fathomfollow.nav.training import train_nav_estimator
 from fathomfollow.perception.detector import metrics_from_train_results
 from fathomfollow.gs.base import GSRenderer, Pose
@@ -194,11 +194,48 @@ def main_run() -> None:
     parser.add_argument("--scenario", type=Path, default=Path("config/scenario.yaml"))
     parser.add_argument("--fixture", type=Path, default=Path("fixtures/sim/smoke.npz"))
     parser.add_argument("--out", type=Path, default=Path("runs/latest"))
+    parser.add_argument(
+        "--nav-checkpoint",
+        type=Path,
+        default=None,
+        help="DriftGuard weights (e.g. data/nav_model/velocity_estimator.pt)",
+    )
     args = parser.parse_args()
     scenario = load_yaml_model(args.scenario, ScenarioConfig)
     env = RecordedSimEnv(args.fixture)
-    result = run_orchestration(env, scenario, args.out)
+    result = run_orchestration(env, scenario, args.out, nav_checkpoint=args.nav_checkpoint)
     print(json.dumps({k: v for k, v in result.items() if k not in ("est_positions", "gt_positions")}))
+
+
+def main_drift_gate() -> None:
+    parser = argparse.ArgumentParser(prog="ff-drift-gate")
+    parser.add_argument(
+        "--fixture",
+        type=Path,
+        default=Path("fixtures/sim/holoocean_smoke.npz"),
+    )
+    parser.add_argument(
+        "--scenario",
+        type=Path,
+        default=Path("config/scenario_holoocean.yaml"),
+    )
+    parser.add_argument("--out", type=Path, default=Path("runs/drift_gate"))
+    parser.add_argument(
+        "--nav-checkpoint",
+        type=Path,
+        default=None,
+        help="DriftGuard weights; uses untrained estimator if omitted",
+    )
+    args = parser.parse_args()
+    scenario = load_yaml_model(args.scenario, ScenarioConfig)
+    result = run_drift_gate(
+        args.fixture,
+        scenario,
+        args.out,
+        nav_checkpoint=args.nav_checkpoint,
+        scenario_path=args.scenario,
+    )
+    print(json.dumps(result.to_dict(), indent=2))
 
 
 def main_eval() -> None:
@@ -209,6 +246,8 @@ def main_eval() -> None:
     parser.add_argument("--augmented-rate", type=float, default=0.0)
     args = parser.parse_args()
     report_path = args.run / "report.md"
+    from fathomfollow.eval.run_eval import evaluate_run
+
     result = evaluate_run(args.run, report_path=report_path)
     if args.ablate_gs:
         ablation = gs_ablation_table(args.baseline_rate, args.augmented_rate)

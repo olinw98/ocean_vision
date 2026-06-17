@@ -22,6 +22,7 @@ def run_orchestration(
     env: RecordedSimEnv,
     scenario: ScenarioConfig,
     out_dir: Path,
+    nav_checkpoint: Path | None = None,
 ) -> dict:
     detector = MockDetector()
     tracker = SimpleTracker()
@@ -29,6 +30,8 @@ def run_orchestration(
     dr = DeadReckoning()
     dr_baseline = DeadReckoning()
     estimator = VelocityEstimator()
+    if nav_checkpoint is not None:
+        estimator.load(nav_checkpoint)
     wrapped = DropoutSimEnv(env, scenario.dropout)
 
     obs = wrapped.reset()

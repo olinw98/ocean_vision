@@ -98,7 +98,15 @@ def train_nav_estimator(cfg: NavTrainingConfig, out_dir: Path) -> Path:
     ckpt_path = out_dir / "velocity_estimator.pt"
     torch.save(model.state_dict(), ckpt_path)
     (out_dir / "metrics.json").write_text(
-        json.dumps({"final_loss": final_loss, "epochs": cfg.epochs}, indent=2),
+        json.dumps(
+            {
+                "final_loss": final_loss,
+                "epochs": cfg.epochs,
+                "hidden_size": cfg.hidden_size,
+                "window_size": cfg.window_size,
+            },
+            indent=2,
+        ),
         encoding="utf-8",
     )
     return ckpt_path

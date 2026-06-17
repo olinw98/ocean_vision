@@ -1,0 +1,16 @@
+name: holoocean_smoke
+holoocean_scenario: PierHarbor-HoveringCamera
+max_steps: 100
+camera_width: 512
+camera_height: 512
+seed: 42
+dropout:
+  alt_min: 2.0
+  tilt_max_deg: 25.0
+  forced_windows:
+    - [1.0, 2.5]
+target:
+  trajectory: circle
+  radius: 5.0
+  speed: 0.5
+  depth: -10.0

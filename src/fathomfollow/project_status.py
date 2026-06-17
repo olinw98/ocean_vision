@@ -23,6 +23,7 @@ ARTIFACT_PATHS: dict[str, Path] = {
     "detector_weights": ROOT / "runs" / "detect" / "train-2" / "weights" / "best.pt",
     "nav_checkpoint": ROOT / "data" / "nav_model" / "velocity_estimator.pt",
     "fathomnet_proxy_fixture": ROOT / "fixtures" / "sim" / "fathomnet_proxy.npz",
+    "holoocean_smoke_fixture": ROOT / "fixtures" / "sim" / "holoocean_smoke.npz",
 }
 
 

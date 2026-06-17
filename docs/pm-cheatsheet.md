@@ -55,16 +55,18 @@ Cursor: use **fathomfollow-session-end** skill.
 
 | Phase | Plain status | Next gate |
 |-------|--------------|-----------|
-| 0 | Code done; HoloOcean install pending | Epic + Py 3.11 on Windows |
-| 1 | Done on GPU | — |
-| 1.5 | Code done; integration not run | GS conda → render → ablation vs **2.12** |
-| 2–4 | Code done; live metrics pending | HoloOcean + hero run |
+| 0 | Complete (HoloOcean smoke on build machine) | — |
+| 1 | Complete on GPU | — |
+| 1.5 | Complete — real GS ablation recorded regression | Optional larger render batch |
+| 2 | Code + fixture drift gate; margin not recorded in baselines | `ff-drift-gate` on build machine with trained nav |
+| 3–4 | Code done; live metrics pending | HoloOcean hero run |
 
 ## Key numbers (committed)
 
 - Taxon: **Bathochordaeus**
-- Pre-GS ablation target: **firing_rate 2.12** (`docs/baselines.json`)
-- Tests: run `pytest -q` (expect 64+ passing)
+- Pre-GS HoloOcean firing_rate: **0.58** (train-2); proxy **2.12**
+- GS real ablation: regression on both fixtures (see `docs/baselines.json`)
+- Tests: run `pytest -q` (expect 73+ passing)
 
 ## Quick commands
 
@@ -73,6 +75,7 @@ ff-status
 ff-status --check-diary
 ff-status --json
 pytest -q
+ff-drift-gate --fixture fixtures/sim/holoocean_smoke.npz --scenario config/scenario_holoocean.yaml
 ```
 
 ## Repo map

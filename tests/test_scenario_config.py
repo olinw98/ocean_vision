@@ -11,6 +11,12 @@ def test_scenario_config_from_repo() -> None:
     assert cfg.holoocean_scenario == "PierHarbor-HoveringCamera"
 
 
+def test_scenario_holoocean_has_forced_dropout() -> None:
+    cfg = load_yaml_model(Path("config/scenario_holoocean.yaml"), ScenarioConfig)
+    assert cfg.name == "holoocean_smoke"
+    assert len(cfg.dropout.forced_windows) >= 1
+
+
 def test_target_trajectory_deterministic() -> None:
     from fathomfollow.config.models import TargetMimicConfig
 
