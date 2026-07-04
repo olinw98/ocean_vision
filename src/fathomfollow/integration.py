@@ -1,12 +1,10 @@
 from __future__ import annotations
 
-import json
-from dataclasses import asdict
 from pathlib import Path
 
 import numpy as np
 
-from fathomfollow.config.models import ScenarioConfig
+from fathomfollow.nav.attitude import AttitudeIntegrator
 from fathomfollow.nav.deadreckon import DeadReckoning
 from fathomfollow.nav.dropout import DropoutSimEnv
 from fathomfollow.nav.estimator import VelocityEstimator
@@ -14,7 +12,6 @@ from fathomfollow.nav.training import write_trajectory_npz
 from fathomfollow.nav.trajectories import log_trajectory
 from fathomfollow.perception.detector import MockDetector, YoloDetector
 from fathomfollow.perception.sim_infer import SimInferReport, run_sim_inference
-from fathomfollow.perception.types import DetectionRecord
 from fathomfollow.sim.base import SimEnv
 from fathomfollow.sim.recorded import RecordedSimEnv
 
@@ -55,6 +52,7 @@ def run_dual_nav_step(
     dr_baseline: DeadReckoning,
     estimator: VelocityEstimator,
     imu_history: list[np.ndarray],
+    attitude: AttitudeIntegrator,
     dt: float = 0.1,
 ) -> tuple[np.ndarray, np.ndarray]:
     """Step learned (estimator-assisted) and baseline (DVL-only) dead reckoning."""
@@ -62,18 +60,20 @@ def run_dual_nav_step(
     win = np.stack(imu_history[-estimator.window_size :])
     est_vel = estimator.estimate(win, obs.dvl if obs.dvl_valid else None)
 
+    quat = attitude.step(obs.imu[3:6], dt)
+
     learned_pos = dr_learned.step(
         obs.dvl if obs.dvl_valid else None,
         est_vel,
         obs.dvl_valid,
         dt,
-        obs.gt_pose[3:7],
+        quat,
     )
     baseline_pos = dr_baseline.step(
         obs.dvl if obs.dvl_valid else None,
         None,
         obs.dvl_valid,
         dt,
-        obs.gt_pose[3:7],
+        quat,
     )
     return learned_pos, baseline_pos

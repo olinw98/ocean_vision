@@ -3,6 +3,7 @@ from pathlib import Path
 import numpy as np
 
 from fathomfollow.integration import generate_trajectories_from_sim, run_dual_nav_step
+from fathomfollow.nav.attitude import AttitudeIntegrator
 from fathomfollow.nav.deadreckon import DeadReckoning
 from fathomfollow.nav.dropout import DropoutSimEnv
 from fathomfollow.nav.estimator import VelocityEstimator
@@ -19,6 +20,8 @@ def test_run_dual_nav_baseline_worse_in_dropout() -> None:
     initial = np.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0])
     dr_learned.reset(initial)
     dr_baseline.reset(initial)
+    attitude = AttitudeIntegrator()
+    attitude.reset(initial[3:7])
 
     from fathomfollow.sim.base import SimObservation
 
@@ -31,7 +34,7 @@ def test_run_dual_nav_baseline_worse_in_dropout() -> None:
         gt_pose=initial,
         gt_target_pose=initial,
     )
-    run_dual_nav_step(obs_valid, dr_learned, dr_baseline, estimator, imu_history)
+    run_dual_nav_step(obs_valid, dr_learned, dr_baseline, estimator, imu_history, attitude)
 
     obs_dropout = SimObservation(
         t=0.1,
@@ -43,7 +46,7 @@ def test_run_dual_nav_baseline_worse_in_dropout() -> None:
         gt_target_pose=initial,
     )
     _, baseline_pos = run_dual_nav_step(
-        obs_dropout, dr_learned, dr_baseline, estimator, imu_history
+        obs_dropout, dr_learned, dr_baseline, estimator, imu_history, attitude
     )
     assert baseline_pos[0] > 0.0
 

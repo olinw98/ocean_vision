@@ -2,11 +2,11 @@
 
 ## Current State
 
-**Last updated:** 2026-07-04T02:30:00Z
-**Last completed step:** Chapter 4 — Final Spec written; v1 **complete**
-**Test suite:** 74/74 passing | last run: 2026-07-04 (Python 3.11 venv)
-**Active blockers:** None for HoloOcean; GS sim-transfer not supported at 9-frame batch size
-**Next action:** Stretch backlog only (larger GS batch, ByteTrack, in-loop GS, RL control) — no v1 gates remaining
+**Last updated:** 2026-07-04T03:15:00Z
+**Last completed step:** Attitude fix + Final Spec addendum; v1 success criterion **met** (live margin **1.27 m**, retention **79%**)
+**Test suite:** 77/77 passing | last run: 2026-07-04 (Python 3.11 venv)
+**Active blockers:** None for HoloOcean; `tilt_max_deg` dropout descoped (HoloOcean quat frame mismatch)
+**Next action:** Stretch backlog only (larger GS batch, ByteTrack, in-loop GS, RL control)
 
 ## Open Judgment Calls
 
@@ -19,6 +19,7 @@
 | 1.2 | 2026-06-09T00:30:00Z | Use Benthocodon for first live train to unblock pipeline; swap to Bathochordaeus before final ablation | Resolved: Bathochordaeus retrain complete 2026-06-09T03:30:00Z |
 | 0.3 / 1.3 | 2026-06-09T01:30:00Z | Proxy fixture uses real FathomNet RGB + synthetic IMU/DVL; honest interim baseline, not a HoloOcean substitute | Resolved: HoloOcean live baseline recorded; proxy retained for comparison |
 | PM | 2026-06-09T14:00:00Z | Notion is human dashboard only; git diary remains agent source of truth | Open |
+| nav | 2026-07-04T03:00:00Z | Mission-start quaternion seed for AttitudeIntegrator (dock alignment); no per-step GT orientation in dead reckoning | Open |
 
 ## Critical Review
 
@@ -843,6 +844,24 @@ Two loops (perception→control, navigation) share HoloOcean via `SimEnv`. Offli
 **deviations:** Documented in Final Spec deviation log
 **judgment_calls:** None new
 **blockers:** None
+**next:** Stretch backlog only (larger GS batch, ByteTrack, in-loop GS, RL control)
+<!-- /DIARY_ENTRY -->
+
+<!-- DIARY_ENTRY -->
+### [2026-07-04T03:15:00Z] Nav fix — AttitudeIntegrator (code review remediation)
+
+**project:** FathomFollow
+**step:** 4.5
+**phase:** Phase 4 / nav
+**status:** Complete
+**files_touched:** src/fathomfollow/nav/attitude.py, src/fathomfollow/integration.py, src/fathomfollow/run.py, tests/test_attitude.py, tests/test_integration.py, docs/baselines.json, implementation-spec.md
+**tests_written:** tests/test_attitude.py (3 tests)
+**tests_passing:** 77/77
+**summary:** Code review found per-step `gt_pose[3:7]` fed into dead reckoning (standing-rule violation). Added gyro-only `AttitudeIntegrator` with mission-start quat seed. Re-measured: live hero margin_dropout **1.27 m** (0.77 vs 2.04 m within dropout), retention **79%**; fixture/hero margin **1.38 m**. v1 criterion still met. Pre-fix metrics (1.29–1.34 m) superseded by addendum.
+**tdd_cycle:** RED — test_dual_nav_does_not_use_per_step_gt_orientation | GREEN — attitude.py + integration.py | REFACTOR — none
+**deviations:** `tilt_max_deg` remains unimplemented (HoloOcean recorded quat → ~132° roll via naive Euler; would force 100% dropout)
+**judgment_calls:** [JUDGMENT CALL] Mission-start attitude seed from sim GT (dock alignment); gyro integration thereafter
+**blockers:** None
 **next:** Stretch backlog only
 <!-- /DIARY_ENTRY -->
 
@@ -997,10 +1016,36 @@ From `pyproject.toml` (main venv, Python ≥3.11):
 
 1. **Sim–real appearance gap:** Detector fires on 58% of live HoloOcean frames (train-2); GS at 9 frames regressed sim firing rates despite +0.013 val mAP50.
 2. **GS turbidity:** Post-render blue-channel tint, not medium-model sweep in all paths.
-3. **Dropout model:** Forced time windows + altitude/tilt rules; not validated against field DVL statistics.
+3. **Dropout model:** Forced time windows + altitude gate active; `tilt_max_deg` in YAML not wired (HoloOcean quat/Euler frame mismatch on recorded fixtures).
 4. **Tracker:** SimpleTracker vs ByteTrack when real detection sequences accumulate.
 5. **Stretch (v2):** In-loop GS rendering co-registered to HoloOcean camera; RL controller behind `FollowController`; larger GS render batches; nav→controller coupling.
 
 ### Closing note
 
 FathomFollow v1 is a reproducible simulation stack that closes the loop from FathomNet-trained perception through visual follow and DVL-dropout navigation in HoloOcean. On the live PierHarbor integration gate, DriftGuard reduced position drift within dropout by **1.34 m** versus classical dead reckoning while maintaining **79%** target-in-frame retention with real YOLO detections. The GS augmentation experiment was executed honestly and did not improve sim-frame detector firing rates at nine composited frames — a useful null result. A second pass would prioritize GS scale (hundreds of frames, domain-matched scenes), ByteTrack on real detection sequences, and optional in-loop GS or RL control behind existing interfaces.
+
+> **Addendum (2026-07-04):** Post–code-review attitude fix superseded pre-fix drift margins. Authoritative post-fix metrics are in **Addendum A** below and `docs/baselines.json` (`nav_attitude` field). v1 success criterion remains **MET**.
+
+### Addendum A — Attitude integration fix (2026-07-04)
+
+**Issue:** Code review identified that `run_dual_nav_step` passed `obs.gt_pose[3:7]` into `DeadReckoning.step()` every timestep — a standing-rule #3 violation that made drift margins optimistic (perfect ground-truth orientation during integration).
+
+**Fix:** `AttitudeIntegrator` (`src/fathomfollow/nav/attitude.py`) integrates body-frame gyro after a one-time mission-start quaternion seed. Neither learned nor baseline dead reckoning reads per-step GT orientation after reset.
+
+**Re-measured gates (authoritative post-fix):**
+
+| Gate | Learned drift (dropout) | Baseline drift (dropout) | Margin | Retention |
+|------|-------------------------|--------------------------|--------|-----------|
+| Drift gate (fixture, MockDetector) | 0.66 m | 2.04 m | **1.38 m** | 88% |
+| Hero fixture (train-2 YOLO) | 0.66 m | 2.04 m | **1.38 m** | 68% |
+| **Live HoloOcean** | **0.77 m** | **2.04 m** | **1.27 m** | **79%** |
+
+Live hero verbatim (`ff-eval --run runs/hero_holoocean_live_v2`):
+
+```json
+{"drift_learned_mean": 0.7154267194718716, "drift_within_dropout": 0.7703431475479161, "tracking_retention": 0.79, "report": "runs/hero_holoocean_live_v2/report.md"}
+```
+
+**Verdict (unchanged):** v1 success criterion **MET** — learned drift within dropout remains lower than baseline while target is actively followed.
+
+**Remaining nav caveats:** (1) mission-start position and attitude seeded once from sim (equivalent to known dock pose); (2) `tilt_max_deg` dropout rule descoped until HoloOcean quaternion frame is mapped correctly for roll/pitch extraction.

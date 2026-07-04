@@ -193,21 +193,21 @@
     "n_dropout_steps": 45,
     "dropout_windows": [[1.0, 2.5]],
     "drift_learned": {
-      "mean_drift": 0.665,
-      "max_drift": 1.462,
-      "drift_within_dropout": 0.720
+      "mean_drift": 0.633,
+      "max_drift": 1.298,
+      "drift_within_dropout": 0.656
     },
     "drift_baseline": {
-      "mean_drift": 1.943,
-      "max_drift": 4.745,
-      "drift_within_dropout": 2.007
+      "mean_drift": 1.982,
+      "max_drift": 4.913,
+      "drift_within_dropout": 2.035
     },
-    "margin_dropout": 1.288,
+    "margin_dropout": 1.379,
     "learned_beats_baseline_dropout": true,
     "tracking_retention": 0.88,
     "metrics_path": "runs/drift_gate_holoocean/drift_gate.json",
     "verdict": "pass",
-    "interpretation": "Learned estimator reduces mean position drift within dropout by 1.29 m vs classical dead reckoning on live HoloOcean fixture replay"
+    "interpretation": "Learned estimator reduces mean position drift within dropout by 1.38 m vs classical dead reckoning (gyro attitude integration; no per-step GT orientation)"
   },
   "phase_4_hero_run": {
     "recorded_at": "2026-07-04",
@@ -217,25 +217,26 @@
     "scenario": "config/scenario_holoocean.yaml",
     "detector_weights": "runs/detect/train-2/weights/best.pt",
     "nav_checkpoint": "data/nav_model/velocity_estimator.pt",
+    "nav_attitude": "gyro-integrated AttitudeIntegrator; mission-start quat seed only (no per-step GT)",
     "n_steps": 100,
     "n_dropout_steps": 45,
     "drift_learned": {
-      "mean_drift": 0.665,
-      "max_drift": 1.462,
-      "drift_within_dropout": 0.720
+      "mean_drift": 0.633,
+      "max_drift": 1.298,
+      "drift_within_dropout": 0.656
     },
     "drift_baseline": {
-      "mean_drift": 1.943,
-      "max_drift": 4.745,
-      "drift_within_dropout": 2.007
+      "mean_drift": 1.982,
+      "max_drift": 4.913,
+      "drift_within_dropout": 2.035
     },
-    "margin_dropout": 1.288,
+    "margin_dropout": 1.379,
     "learned_beats_baseline_dropout": true,
     "tracking_retention": 0.68,
     "metrics_path": "runs/hero_holoocean/nav_log.json",
     "report_path": "runs/hero_holoocean/report.md",
     "verdict": "pass",
-    "interpretation": "Full closed loop with real YOLO on HoloOcean RGB replay: DriftGuard beats dead reckoning during dropout while target tracked 68% of steps"
+    "interpretation": "Full closed loop with real YOLO on HoloOcean RGB replay after attitude fix: DriftGuard beats dead reckoning during dropout while target tracked 68% of steps"
   },
   "phase_4_live_hero_run": {
     "recorded_at": "2026-07-04",
@@ -246,23 +247,25 @@
     "scenario": "config/scenario_holoocean.yaml",
     "detector_weights": "runs/detect/train-2/weights/best.pt",
     "nav_checkpoint": "data/nav_model/velocity_estimator.pt",
+    "nav_attitude": "gyro-integrated AttitudeIntegrator; mission-start quat seed only (no per-step GT)",
     "n_steps": 100,
     "n_dropout_steps": 45,
     "dropout_windows": [[1.0, 2.5]],
     "drift_learned": {
-      "mean_drift": 0.660,
-      "drift_within_dropout": 0.714
+      "mean_drift": 0.715,
+      "drift_within_dropout": 0.770
     },
     "drift_baseline": {
-      "mean_drift": 1.987,
-      "drift_within_dropout": 2.053
+      "mean_drift": 1.977,
+      "drift_within_dropout": 2.044
     },
-    "margin_dropout": 1.339,
+    "margin_dropout": 1.274,
     "learned_beats_baseline_dropout": true,
     "tracking_retention": 0.79,
-    "metrics_path": "runs/hero_holoocean_live/nav_log.json",
-    "report_path": "runs/hero_holoocean_live/report.md",
+    "nav_attitude": "gyro-integrated AttitudeIntegrator; mission-start quat seed only (no per-step GT)",
+    "metrics_path": "runs/hero_holoocean_live_v2/nav_log.json",
+    "report_path": "runs/hero_holoocean_live_v2/report.md",
     "verdict": "pass",
-    "interpretation": "Live Unreal closed loop: 79% target retention on fresh RGB (vs 68% fixture replay); DriftGuard margin 1.34 m within dropout"
+    "interpretation": "Live Unreal closed loop after attitude fix: 79% retention; DriftGuard margin 1.27 m within dropout (gyro integration, no per-step GT orientation)"
   }
 }

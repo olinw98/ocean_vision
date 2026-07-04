@@ -9,6 +9,7 @@ import numpy as np
 from fathomfollow.config.models import ScenarioConfig, load_yaml_model
 from fathomfollow.control.visual_servo import FollowController
 from fathomfollow.integration import run_dual_nav_step
+from fathomfollow.nav.attitude import AttitudeIntegrator
 from fathomfollow.nav.deadreckon import DeadReckoning
 from fathomfollow.nav.dropout import DropoutSimEnv
 from fathomfollow.nav.estimator import VelocityEstimator
@@ -44,6 +45,8 @@ def run_orchestration(
     obs = wrapped.reset()
     dr.reset(obs.gt_pose)
     dr_baseline.reset(obs.gt_pose)
+    attitude = AttitudeIntegrator()
+    attitude.reset(obs.gt_pose[3:7])
     imu_history: list[np.ndarray] = []
     est_positions: list[np.ndarray] = []
     gt_positions: list[np.ndarray] = []
@@ -55,7 +58,7 @@ def run_orchestration(
     cmd = Command(0.0, 0.0, 0.0)
     for step in range(scenario.max_steps):
         est_pos, baseline_pos = run_dual_nav_step(
-            obs, dr, dr_baseline, estimator, imu_history
+            obs, dr, dr_baseline, estimator, imu_history, attitude
         )
         dets = detector.detect(obs.rgb, frame_id=step)
         tracks = tracker.update(dets)

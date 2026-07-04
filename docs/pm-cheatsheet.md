@@ -66,8 +66,8 @@ Cursor: use **fathomfollow-session-end** skill.
 - Taxon: **Bathochordaeus**
 - Pre-GS HoloOcean firing_rate: **0.58** (train-2); proxy **2.12**
 - GS real ablation: regression on both fixtures (see `docs/baselines.json`)
-- Live hero: **79%** retention, **1.34 m** drift margin within dropout
-- Tests: run `pytest -q` (expect 74+ passing)
+- Live hero: **79%** retention, **1.27 m** drift margin within dropout (post attitude fix)
+- Tests: run `pytest -q` (expect 77+ passing)
 
 ## Quick commands
 
