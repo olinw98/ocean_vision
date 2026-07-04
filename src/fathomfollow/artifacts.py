@@ -12,6 +12,16 @@ ROOT = Path(__file__).resolve().parents[2]
 REGISTRY_PATH = ROOT / "docs" / "artifacts.json"
 
 
+def canonical_artifact_paths(root: Path | None = None) -> dict[str, Path]:
+    """Resolve hero bundle dest paths from docs/artifacts.json."""
+    base = root or ROOT
+    registry = load_registry()
+    return {
+        entry["id"]: base / entry["dest"]
+        for entry in registry["bundles"]["hero"]["artifacts"]
+    }
+
+
 def load_registry(registry_path: Path | None = None) -> dict[str, Any]:
     path = registry_path or REGISTRY_PATH
     return json.loads(path.read_text(encoding="utf-8"))

@@ -2,11 +2,11 @@
 
 ## Current State
 
-**Last updated:** 2026-07-04T19:00:00Z
-**Last completed step:** FB-005 — artifact registry + `ff-fetch hero` + preflight
-**Test suite:** 112/112 passing | last run: 2026-07-04 (Python 3.11 venv)
+**Last updated:** 2026-07-04T19:30:00Z
+**Last completed step:** FB-011 — `docs/reproduce_hero.md` + pinned canonical train paths
+**Test suite:** 116/116 passing | last run: 2026-07-04 (Python 3.11 venv)
 **Active blockers:** `tilt_max_deg` unwired (FB-008); GS sim-transfer regression
-**Next action:** **FB-011** `docs/reproduce_hero.md` + canonical weights path — see `## Builder Backlog: Customer Feedback`
+**Next action:** **FB-012** GitHub Actions pytest gate — see `## Builder Backlog: Customer Feedback`
 
 ## Open Judgment Calls
 
@@ -1365,4 +1365,22 @@ FB-001 (docs, 1 session)
 **judgment_calls:** None
 **blockers:** None
 **next:** FB-011 reproduce_hero.md + pin canonical train output path
+<!-- /DIARY_ENTRY -->
+
+<!-- DIARY_ENTRY -->
+### [2026-07-04T19:30:00Z] FB-011 — Reproduce hero doc + canonical train paths
+
+**project:** FathomFollow
+**step:** FB-011
+**phase:** Customer feedback remediation
+**status:** Complete
+**files_touched:** docs/reproduce_hero.md, config/detector_train.yaml, config/nav_train_holoocean.yaml, src/fathomfollow/config/models.py, src/fathomfollow/cli.py, src/fathomfollow/artifacts.py, README.md, docs/workflow.md, tests/test_train_detector.py, tests/test_artifacts.py, implementation-spec.md
+**tests_written:** test_detector_train_config_pins_canonical_run_name, test_nav_train_holoocean_pins_canonical_checkpoint_dir, test_train_detector_passes_pinned_project_and_name, test_canonical_artifact_paths_match_registry
+**tests_passing:** 116/116
+**summary:** Added reproduce_hero.md (fast=ff-fetch+fixture hero; full=retrain chain). Detector train pins `project`+`run_name` (train-2) via Ultralytics `exist_ok`; nav train pins `checkpoint_dir: data/nav_model`. ff-train-* print canonical paths. README/workflow link ff-fetch + reproduce guide.
+**tdd_cycle:** RED — train path pin tests | GREEN — config fields + CLI train kwargs | REFACTOR — canonical_artifact_paths() helper
+**deviations:** None
+**judgment_calls:** None
+**blockers:** None
+**next:** FB-012 GitHub Actions pytest gate
 <!-- /DIARY_ENTRY -->

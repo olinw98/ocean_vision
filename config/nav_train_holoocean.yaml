@@ -1,4 +1,5 @@
 trajectories_dir: data/trajectories_holoocean
+checkpoint_dir: data/nav_model
 epochs: 50
 arch: gru
 window_size: 20

@@ -176,10 +176,23 @@ def main_train_detector() -> None:
         imgsz=cfg.imgsz,
         batch=cfg.batch,
         seed=cfg.seed,
+        project=str(cfg.project),
+        name=cfg.run_name,
+        exist_ok=True,
     )
     metrics = metrics_from_train_results(results)
     out = Path(cfg.data_yaml).parent / "metrics.json"
     out.write_text(json.dumps(metrics, indent=2), encoding="utf-8")
+    print(
+        json.dumps(
+            {
+                "weights": str(cfg.canonical_weights_path()),
+                "metrics": str(out),
+                "run_name": cfg.run_name,
+            },
+            indent=2,
+        )
+    )
 
 
 def main_train_nav() -> None:
@@ -187,9 +200,17 @@ def main_train_nav() -> None:
     parser.add_argument("--config", type=Path, required=True)
     args = parser.parse_args()
     cfg = load_yaml_model(args.config, NavTrainingConfig)
-    out_dir = cfg.trajectories_dir.parent / "nav_model"
-    ckpt = train_nav_estimator(cfg, out_dir)
-    print(json.dumps({"checkpoint": str(ckpt), "out_dir": str(out_dir)}))
+    ckpt = train_nav_estimator(cfg, cfg.checkpoint_dir)
+    print(
+        json.dumps(
+            {
+                "checkpoint": str(ckpt),
+                "out_dir": str(cfg.checkpoint_dir),
+                "canonical_path": str(cfg.canonical_checkpoint_path()),
+            },
+            indent=2,
+        )
+    )
 
 
 def main_fetch() -> None:

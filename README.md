@@ -19,11 +19,11 @@ pip install -e ".[dev]"
 pytest -q
 ```
 
-Expect **90/90** passing on Python 3.11.
+Expect **115+** passing on Python 3.11.
 
-### Tier 1 — Fixture replay (recorded HoloOcean NPZ, local weights)
+### Tier 1 — Fixture replay (recorded HoloOcean NPZ)
 
-Requires gitignored artifacts (`runs/detect/train-2/`, `data/nav_model/`). See [`docs/workflow.md`](docs/workflow.md).
+Fresh clone: run `ff-fetch hero` first (see [`docs/reproduce_hero.md`](docs/reproduce_hero.md)).
 
 ```powershell
 ff-run --fixture fixtures/sim/holoocean_smoke.npz --scenario config/scenario_holoocean.yaml `
@@ -60,7 +60,10 @@ See [`docs/gs_setup.md`](docs/gs_setup.md). Real GS train/render is a manual int
 | `ff-run` | Perception closed loop + parallel nav eval |
 | `ff-drift-gate` | Phase 2 nav acceptance on fixture replay |
 | `ff-eval` | Report from run logs |
+| `ff-fetch` | Install canonical hero weights from bundled fixtures |
 | `ff-gs` | WaterSplatting subprocess (offline) |
+
+**Reproduce hero:** [`docs/reproduce_hero.md`](docs/reproduce_hero.md) (fast = `ff-fetch` + fixture; full = retrain chain)
 
 ## Non-goals (v1)
 

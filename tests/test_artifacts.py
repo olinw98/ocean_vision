@@ -6,6 +6,7 @@ import pytest
 
 from fathomfollow.artifacts import (
     artifact_hint,
+    canonical_artifact_paths,
     fetch_bundle,
     load_registry,
     preflight_artifact,
@@ -130,3 +131,11 @@ def test_verify_artifact_matches_registry(tmp_path: Path) -> None:
 
 def test_artifact_hint_includes_fetch_command() -> None:
     assert "ff-fetch hero" in artifact_hint("detector_weights")
+
+
+def test_canonical_artifact_paths_match_registry() -> None:
+    from fathomfollow.artifacts import ROOT
+
+    paths = canonical_artifact_paths()
+    assert paths["detector_weights"] == ROOT / "runs/detect/train-2/weights/best.pt"
+    assert paths["nav_checkpoint"] == ROOT / "data/nav_model/velocity_estimator.pt"

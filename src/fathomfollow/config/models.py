@@ -47,6 +47,17 @@ class DetectorTrainingConfig(BaseModel):
     imgsz: int = Field(640, ge=32)
     batch: int = Field(8, ge=1)
     seed: int = 42
+    project: Path = Field(
+        Path("runs/detect"),
+        description="Ultralytics project dir; canonical hero weights under project/run_name/",
+    )
+    run_name: str = Field(
+        "train-2",
+        description="Ultralytics run folder name (avoid accidental train-3, train-4, …)",
+    )
+
+    def canonical_weights_path(self) -> Path:
+        return self.project / self.run_name / "weights" / "best.pt"
 
 
 class NavTrainingConfig(BaseModel):
@@ -57,6 +68,13 @@ class NavTrainingConfig(BaseModel):
     hidden_size: int = Field(64, ge=8)
     lr: float = Field(1e-3, gt=0)
     seed: int = 42
+    checkpoint_dir: Path = Field(
+        Path("data/nav_model"),
+        description="Canonical DriftGuard checkpoint directory",
+    )
+
+    def canonical_checkpoint_path(self) -> Path:
+        return self.checkpoint_dir / "velocity_estimator.pt"
 
 
 class PoseEntry(BaseModel):

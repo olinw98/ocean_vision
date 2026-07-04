@@ -13,7 +13,7 @@ How to run the project across machines, sessions, and agents without losing stat
 
 **Git ignores:** `data/`, `runs/`, `.venv/`, downloaded weights (`yolo11n.pt`). Metrics that matter for the plan live in committed files (`docs/baselines.json`, diary entries) — not in gitignored train outputs alone.
 
-If you switch machines mid-phase, **pull first**, then either re-run the integration step or copy gitignored artifacts manually. Never assume `runs/detect/train-2/weights/best.pt` exists after a fresh clone.
+If you switch machines mid-phase, **pull first**, then either re-run the integration step or copy gitignored artifacts manually. After a fresh clone, run **`ff-fetch hero`** (see [`reproduce_hero.md`](reproduce_hero.md)) — do not assume `runs/detect/train-2/weights/best.pt` exists.
 
 ## Session rituals
 
