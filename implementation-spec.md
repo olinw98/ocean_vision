@@ -2,11 +2,11 @@
 
 ## Current State
 
-**Last updated:** 2026-07-04T02:00:00Z
-**Last completed step:** Step 4.3 — Hero ff-run on `holoocean_smoke.npz` with train-2 YOLO + nav checkpoint → margin_dropout **1.29 m**, tracking retention **68%**; Phase 4 acceptance pass
+**Last updated:** 2026-07-04T02:15:00Z
+**Last completed step:** Step 4.4 — Live `ff-run --live` on PierHarbor → margin_dropout **1.34 m**, tracking retention **79%**; v1 live integration gate pass
 **Test suite:** 74/74 passing | last run: 2026-07-04 (Python 3.11 venv)
 **Active blockers:** None for HoloOcean; GS sim-transfer hypothesis not supported at current batch size (9 frames)
-**Next action:** Optional live `ff-run --live` on HoloOcean, or declare v1 complete and document stretch items (in-loop GS, RL control, ByteTrack)
+**Next action:** Declare v1 complete (Final Spec chapter), or pursue stretch backlog (larger GS batch, ByteTrack, in-loop GS, RL control)
 
 ## Open Judgment Calls
 
@@ -808,6 +808,24 @@ Two loops (perception→control, navigation) share HoloOcean via `SimEnv`. Offli
 **judgment_calls:** None
 **blockers:** None
 **next:** Optional live `ff-run --live` on HoloOcean, or declare v1 complete and document stretch items (in-loop GS, RL control, ByteTrack)
+<!-- /DIARY_ENTRY -->
+
+<!-- DIARY_ENTRY -->
+### [2026-07-04T02:15:00Z] Step 4.4 — Live HoloOcean hero ff-run + eval
+
+**project:** FathomFollow
+**step:** 4.4
+**phase:** Phase 4
+**status:** Complete
+**files_touched:** docs/baselines.json, implementation-spec.md, runs/hero_holoocean_live/ (local, gitignored)
+**tests_written:** n/a
+**tests_passing:** 74/74
+**summary:** Live `ff-run --live` on PierHarbor-HoveringCamera (holoocean 2.3.0), train-2 + nav checkpoint, 100 steps / 45 dropout. `ff-eval`: drift_within_dropout **0.71 m** vs baseline **2.05 m** (margin **1.34 m**), tracking_retention **79%** on fresh Unreal RGB (vs 68% on holoocean_smoke replay). v1 live integration gate pass.
+**tdd_cycle:** n/a — manual live integration gate
+**deviations:** None
+**judgment_calls:** None
+**blockers:** None
+**next:** Declare v1 complete (Final Spec chapter), or pursue stretch backlog (larger GS batch, ByteTrack, in-loop GS, RL control)
 <!-- /DIARY_ENTRY -->
 
 ## Final Spec
