@@ -1,0 +1,24 @@
+{
+  "version": 1,
+  "description": "Canonical artifact registry for clone-reproducible hero runs (FB-005)",
+  "bundles": {
+    "hero": {
+      "description": "Bathochordaeus train-2 detector + DriftGuard nav checkpoint for fixture hero",
+      "command": "ff-fetch hero",
+      "artifacts": [
+        {
+          "id": "detector_weights",
+          "dest": "runs/detect/train-2/weights/best.pt",
+          "source": "fixtures/artifacts/hero/best.pt",
+          "sha256": "bc415d3ac84d5a5a9334ad7b984e700faa3789206bb99c96199d8c20aa47fe85"
+        },
+        {
+          "id": "nav_checkpoint",
+          "dest": "data/nav_model/velocity_estimator.pt",
+          "source": "fixtures/artifacts/hero/velocity_estimator.pt",
+          "sha256": "6d1a83ce154a3a27fb7db73b3ce41b460950fa0fed4583f952d511fd94708c95"
+        }
+      ]
+    }
+  }
+}

@@ -50,6 +50,7 @@ Cursor: use **fathomfollow-session-end** skill.
 | Code, tests, fixtures | `data/` datasets |
 | `implementation-spec.md` | `runs/` weights, train outputs |
 | `docs/baselines.json` | `.venv/` |
+| `docs/artifacts.json` | |
 
 ## Phase at a glance
 
@@ -66,8 +67,8 @@ Cursor: use **fathomfollow-session-end** skill.
 - Taxon: **Bathochordaeus**
 - Pre-GS HoloOcean firing_rate: **0.58** (train-2); proxy **2.12**
 - GS real ablation: regression on both fixtures (see `docs/baselines.json`)
-- Live hero: **79%** retention, **1.27 m** drift margin within dropout (post attitude fix)
-- Tests: run `pytest -q` (expect 77+ passing)
+- Live hero: **79%** active-track retention, **1.27 m** drift margin within dropout (post attitude fix)
+- Tests: run `pytest -q` (expect **112** passing)
 
 ## Quick commands
 
@@ -76,7 +77,15 @@ ff-status
 ff-status --check-diary
 ff-status --json
 pytest -q
-ff-drift-gate --fixture fixtures/sim/holoocean_smoke.npz --scenario config/scenario_holoocean.yaml
+ff-fetch hero   # clone: install train-2 + nav checkpoint from fixtures bundle
+ff-drift-gate --allow-mock-detector \
+  --fixture fixtures/sim/holoocean_smoke.npz \
+  --scenario config/scenario_holoocean.yaml \
+  --nav-checkpoint data/nav_model/velocity_estimator.pt
+ff-run --fixture fixtures/sim/holoocean_smoke.npz \
+  --scenario config/scenario_holoocean.yaml \
+  --detector runs/detect/train-2/weights/best.pt \
+  --nav-checkpoint data/nav_model/velocity_estimator.pt
 ```
 
 ## Repo map

@@ -191,11 +191,12 @@
   "phase_2_drift_gate": {
     "recorded_at": "2026-07-04",
     "description": "Phase 2 acceptance — DriftGuard vs dead-reckoning baseline within DVL dropout windows on holoocean_smoke replay",
-    "command": "ff-drift-gate --fixture fixtures/sim/holoocean_smoke.npz --scenario config/scenario_holoocean.yaml --nav-checkpoint data/nav_model/velocity_estimator.pt --out runs/drift_gate_holoocean",
+    "command": "ff-drift-gate --allow-mock-detector --fixture fixtures/sim/holoocean_smoke.npz --scenario config/scenario_holoocean.yaml --nav-checkpoint data/nav_model/velocity_estimator.pt --out runs/drift_gate_holoocean",
     "fixture": "fixtures/sim/holoocean_smoke.npz",
     "scenario": "config/scenario_holoocean.yaml",
     "nav_checkpoint": "data/nav_model/velocity_estimator.pt",
-    "detector_context": "runs/detect/train-2/weights/best.pt (pre-GS baseline path; ff-run uses MockDetector for nav gate)",
+    "detector_context": "MockDetector (--allow-mock-detector); tracking_retention 88% is not comparable to hero YOLO runs",
+    "coupling_mode": "parallel-eval",
     "n_steps": 100,
     "n_dropout_steps": 45,
     "dropout_windows": [[1.0, 2.5]],
@@ -214,7 +215,7 @@
     "tracking_retention": 0.88,
     "metrics_path": "runs/drift_gate_holoocean/drift_gate.json",
     "verdict": "pass",
-    "interpretation": "Learned estimator reduces mean position drift within dropout by 1.38 m vs classical dead reckoning (gyro attitude integration; no per-step GT orientation)"
+    "interpretation": "Parallel-eval nav gate: DriftGuard reduces mean position drift within dropout by 1.38 m vs dead reckoning; tracking_retention uses MockDetector (explicit opt-in) and is not comparable to YOLO hero runs"
   },
   "phase_4_hero_run": {
     "recorded_at": "2026-07-04",
@@ -240,10 +241,11 @@
     "margin_dropout": 1.379,
     "learned_beats_baseline_dropout": true,
     "tracking_retention": 0.68,
+    "coupling_mode": "parallel-eval",
     "metrics_path": "runs/hero_holoocean/nav_log.json",
     "report_path": "runs/hero_holoocean/report.md",
     "verdict": "pass",
-    "interpretation": "Full closed loop with real YOLO on HoloOcean RGB replay after attitude fix: DriftGuard beats dead reckoning during dropout while target tracked 68% of steps"
+    "interpretation": "Perception closed loop + parallel nav eval on HoloOcean RGB replay: real YOLO tracking 68% of steps; DriftGuard beats dead reckoning during dropout (nav does not steer controller in v1)"
   },
   "phase_4_live_hero_run": {
     "recorded_at": "2026-07-04",
@@ -270,9 +272,10 @@
     "learned_beats_baseline_dropout": true,
     "tracking_retention": 0.79,
     "nav_attitude": "gyro-integrated AttitudeIntegrator; mission-start quat seed only (no per-step GT)",
+    "coupling_mode": "parallel-eval",
     "metrics_path": "runs/hero_holoocean_live_v2/nav_log.json",
     "report_path": "runs/hero_holoocean_live_v2/report.md",
     "verdict": "pass",
-    "interpretation": "Live Unreal closed loop after attitude fix: 79% retention; DriftGuard margin 1.27 m within dropout (gyro integration, no per-step GT orientation)"
+    "interpretation": "Perception closed loop + parallel nav eval on live HoloOcean: 79% active-track retention; DriftGuard margin 1.27 m within dropout (nav does not steer controller in v1)"
   }
 }

@@ -32,9 +32,15 @@ def metrics_from_train_results(results: object) -> dict:
 
 
 class YoloDetector:
-    def __init__(self, weights: str | Path = "yolo11n.pt", conf_threshold: float = 0.25) -> None:
+    def __init__(
+        self,
+        weights: str | Path = "yolo11n.pt",
+        conf_threshold: float = 0.25,
+        class_id: int | None = None,
+    ) -> None:
         self._weights = str(weights)
         self._conf_threshold = conf_threshold
+        self._class_id = class_id
         self._model = None
 
     def _load(self) -> None:
@@ -66,7 +72,10 @@ class YoloDetector:
                         confidence=float(box.conf[0]),
                     )
                 )
-        return [d for d in dets if d.confidence >= self._conf_threshold]
+        dets = [d for d in dets if d.confidence >= self._conf_threshold]
+        if self._class_id is not None:
+            dets = [d for d in dets if d.class_id == self._class_id]
+        return dets
 
     @staticmethod
     def parse_metrics(metrics_path: Path) -> dict:

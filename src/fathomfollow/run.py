@@ -18,10 +18,15 @@ from fathomfollow.perception.tracker import SimpleTracker
 from fathomfollow.sim.base import Command, SimEnv
 from fathomfollow.sim.recorded import RecordedSimEnv
 
+COUPLING_MODE = "parallel-eval"
 
-def _make_detector(detector_weights: Path | None) -> MockDetector | YoloDetector:
+
+def _make_detector(
+    detector_weights: Path | None,
+    target_class_id: int | None = None,
+) -> MockDetector | YoloDetector:
     if detector_weights is not None:
-        return YoloDetector(weights=detector_weights)
+        return YoloDetector(weights=detector_weights, class_id=target_class_id)
     return MockDetector()
 
 
@@ -32,7 +37,7 @@ def run_orchestration(
     nav_checkpoint: Path | None = None,
     detector_weights: Path | None = None,
 ) -> dict:
-    detector = _make_detector(detector_weights)
+    detector = _make_detector(detector_weights, scenario.target_class_id)
     tracker = SimpleTracker()
     controller = FollowController()
     dr = DeadReckoning()
@@ -87,7 +92,7 @@ def run_orchestration(
                 "dets": [d.to_dict() for d in dets],
                 "gt_pose": obs.gt_pose.tolist(),
                 "gt_target_pose": obs.gt_target_pose.tolist(),
-                "target_in_frame": active is not None,
+                "track_active": active is not None,
             }
         )
         if getattr(env, "done", False):
@@ -98,11 +103,24 @@ def run_orchestration(
     out_dir.mkdir(parents=True, exist_ok=True)
     (out_dir / "nav_log.json").write_text(json.dumps(nav_log, indent=2), encoding="utf-8")
     (out_dir / "ctrl_log.json").write_text(json.dumps(ctrl_log, indent=2), encoding="utf-8")
+    run_metadata = {
+        "coupling_mode": COUPLING_MODE,
+        "scenario": scenario.name,
+        "target_class_id": scenario.target_class_id,
+        "camera_width": scenario.camera_width,
+        "camera_height": scenario.camera_height,
+    }
+    (out_dir / "run_metadata.json").write_text(
+        json.dumps(run_metadata, indent=2),
+        encoding="utf-8",
+    )
     return {
         "est_positions": est_positions,
         "gt_positions": gt_positions,
         "dropout_mask": dropout_mask,
         "in_frame": in_frame,
+        "coupling_mode": COUPLING_MODE,
         "nav_log_path": str(out_dir / "nav_log.json"),
         "ctrl_log_path": str(out_dir / "ctrl_log.json"),
+        "run_metadata_path": str(out_dir / "run_metadata.json"),
     }

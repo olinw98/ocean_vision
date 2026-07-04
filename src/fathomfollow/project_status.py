@@ -12,6 +12,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
+from fathomfollow.artifacts import registry_artifact_status
+
 ROOT = Path(__file__).resolve().parents[2]
 SPEC_PATH = ROOT / "implementation-spec.md"
 BASELINES_PATH = ROOT / "docs" / "baselines.json"
@@ -56,6 +58,7 @@ class ProjectSnapshot:
     diary_entry_count: int = 0
     artifacts: dict[str, dict[str, Any]] = field(default_factory=dict)
     baselines: dict[str, Any] | None = None
+    registry_artifacts: dict[str, dict[str, Any]] = field(default_factory=dict)
     diary_warnings: list[str] = field(default_factory=list)
 
 
@@ -236,6 +239,7 @@ def collect_snapshot(*, run_tests: bool = True, check_diary: bool = False) -> Pr
         diary_entry_count=len(entries),
         artifacts={name: _artifact_status(path) for name, path in ARTIFACT_PATHS.items()},
         baselines=_load_baselines(),
+        registry_artifacts=registry_artifact_status(),
         diary_warnings=warnings,
     )
 
@@ -280,6 +284,16 @@ def format_text(snapshot: ProjectSnapshot) -> str:
             lines.append(f"  [x] {name}: {info['path']}{suffix}")
         else:
             lines.append(f"  [ ] {name}: MISSING")
+
+    if snapshot.registry_artifacts:
+        lines.extend(["", "## Registry artifacts (hero)"])
+        for name, info in snapshot.registry_artifacts.items():
+            if info.get("exists") and info.get("sha256_ok"):
+                lines.append(f"  [x] {name}: {info['dest']} (sha256 ok)")
+            elif info.get("exists"):
+                lines.append(f"  [!] {name}: {info['dest']} (sha256 MISMATCH)")
+            else:
+                lines.append(f"  [ ] {name}: MISSING — run ff-fetch hero")
 
     if snapshot.baselines:
         pre = snapshot.baselines.get("pre_gs_baseline", {})

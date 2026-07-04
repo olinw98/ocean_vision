@@ -2,7 +2,10 @@ from __future__ import annotations
 
 import argparse
 import json
+import sys
 from pathlib import Path
+
+from fathomfollow.artifacts import fetch_bundle, preflight_run_artifacts
 
 from fathomfollow.config.models import (
     CameraPathConfig,
@@ -189,6 +192,38 @@ def main_train_nav() -> None:
     print(json.dumps({"checkpoint": str(ckpt), "out_dir": str(out_dir)}))
 
 
+def main_fetch() -> None:
+    parser = argparse.ArgumentParser(prog="ff-fetch")
+    sub = parser.add_subparsers(dest="cmd", required=True)
+
+    hero_p = sub.add_parser("hero", help="Install canonical hero detector + nav checkpoint")
+    hero_p.add_argument(
+        "--force",
+        action="store_true",
+        help="Re-copy bundled artifacts even when dest files already match registry SHA-256",
+    )
+
+    args = parser.parse_args()
+    if args.cmd == "hero":
+        try:
+            fetched = fetch_bundle("hero", force=args.force)
+        except (FileNotFoundError, ValueError) as exc:
+            print(str(exc), file=sys.stderr)
+            sys.exit(1)
+        print(json.dumps({"bundle": "hero", "artifacts": fetched}, indent=2))
+
+
+def _preflight_or_exit(
+    detector: Path | None,
+    nav_checkpoint: Path | None,
+) -> None:
+    try:
+        preflight_run_artifacts(detector_weights=detector, nav_checkpoint=nav_checkpoint)
+    except FileNotFoundError as exc:
+        print(str(exc), file=sys.stderr)
+        sys.exit(1)
+
+
 def main_run() -> None:
     parser = argparse.ArgumentParser(prog="ff-run")
     parser.add_argument("--scenario", type=Path, default=Path("config/scenario_holoocean.yaml"))
@@ -212,6 +247,7 @@ def main_run() -> None:
         help="Use live HoloOcean instead of a recorded fixture",
     )
     args = parser.parse_args()
+    _preflight_or_exit(args.detector, args.nav_checkpoint)
     scenario = load_yaml_model(args.scenario, ScenarioConfig)
     if args.live:
         from fathomfollow.sim.holoocean_env import HoloOceanSimEnv
@@ -248,15 +284,32 @@ def main_drift_gate() -> None:
         default=None,
         help="DriftGuard weights; uses untrained estimator if omitted",
     )
-    args = parser.parse_args()
-    scenario = load_yaml_model(args.scenario, ScenarioConfig)
-    result = run_drift_gate(
-        args.fixture,
-        scenario,
-        args.out,
-        nav_checkpoint=args.nav_checkpoint,
-        scenario_path=args.scenario,
+    parser.add_argument(
+        "--detector",
+        type=Path,
+        default=None,
+        help="YOLO weights for tracking_retention (required unless --allow-mock-detector)",
     )
+    parser.add_argument(
+        "--allow-mock-detector",
+        action="store_true",
+        help="Use MockDetector for tracking_retention (inflated vs real YOLO; must be explicit)",
+    )
+    args = parser.parse_args()
+    _preflight_or_exit(args.detector, args.nav_checkpoint)
+    scenario = load_yaml_model(args.scenario, ScenarioConfig)
+    try:
+        result = run_drift_gate(
+            args.fixture,
+            scenario,
+            args.out,
+            nav_checkpoint=args.nav_checkpoint,
+            scenario_path=args.scenario,
+            detector_weights=args.detector,
+            allow_mock_detector=args.allow_mock_detector,
+        )
+    except ValueError as exc:
+        parser.error(str(exc))
     print(json.dumps(result.to_dict(), indent=2))
 
 
@@ -280,6 +333,7 @@ def main_eval() -> None:
             retention=result.tracking_retention,
             ablation=ablation,
             detection_quality=result.detection_quality,
+            coupling_mode=result.coupling_mode,
         )
     payload = {
         "drift_learned_mean": result.drift_learned.mean_drift,

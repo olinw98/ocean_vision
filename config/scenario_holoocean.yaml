@@ -14,3 +14,4 @@ target:
   radius: 5.0
   speed: 0.5
   depth: -10.0
+target_class_id: 0

@@ -79,7 +79,7 @@ def test_evaluate_run_includes_detection_quality_in_report(tmp_path: Path) -> No
     ctrl = [
         {
             "t": 0.0,
-            "target_in_frame": True,
+            "track_active": True,
             "gt_pose": gt_pose,
             "gt_target_pose": gt_target,
             "dets": [{"bbox": [cx, cy, bw, bh], "class_id": 0, "confidence": 0.9}],

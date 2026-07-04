@@ -32,6 +32,11 @@ class ScenarioConfig(BaseModel):
     camera_height: int = Field(480, ge=32)
     dropout: DropoutConfig = Field(default_factory=DropoutConfig)
     target: TargetMimicConfig = Field(default_factory=TargetMimicConfig)
+    target_class_id: int = Field(
+        0,
+        ge=0,
+        description="YOLO class index for target taxon (Bathochordaeus=0 in single-class v1)",
+    )
     seed: int = 42
 
 

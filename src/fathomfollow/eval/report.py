@@ -17,9 +17,13 @@ def generate_report(
     retention: float,
     ablation: dict | None = None,
     detection_quality: "DetectionQualityMetrics | None" = None,
+    coupling_mode: str = "parallel-eval",
 ) -> None:
     lines = [
         "# FathomFollow Evaluation Report",
+        "",
+        "## Architecture",
+        f"- Coupling mode: {coupling_mode} (nav logs drift alongside control; nav does not steer the controller in v1)",
         "",
         "## Navigation Drift",
         f"- Baseline mean drift: {drift_baseline.mean_drift:.4f} m",
@@ -28,7 +32,7 @@ def generate_report(
         f"- Learned drift within dropout: {drift_learned.drift_within_dropout:.4f} m",
         "",
         "## Tracking",
-        f"- Target in-frame retention: {retention:.2%}",
+        f"- Active track retention: {retention:.2%}",
         "",
     ]
     if detection_quality is not None:

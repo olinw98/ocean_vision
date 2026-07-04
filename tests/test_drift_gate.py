@@ -1,11 +1,14 @@
 from pathlib import Path
+from unittest.mock import MagicMock
 
 import json
 
 import numpy as np
+import pytest
 import torch
 
 from fathomfollow.config.models import NavTrainingConfig, ScenarioConfig, load_yaml_model
+from fathomfollow.eval.metrics import DriftMetrics
 from fathomfollow.nav.drift_gate import run_drift_gate
 from fathomfollow.nav.dropout import DropoutSimEnv
 from fathomfollow.nav.estimator import VelocityEstimator
@@ -37,11 +40,71 @@ def test_holoocean_scenario_forces_dropout() -> None:
 def test_drift_gate_records_dropout_drift(tmp_path: Path) -> None:
     scenario = load_yaml_model(HOLO_SCENARIO, ScenarioConfig)
     out = tmp_path / "gate"
-    result = run_drift_gate(HOLO_FIXTURE, scenario, out)
+    result = run_drift_gate(
+        HOLO_FIXTURE,
+        scenario,
+        out,
+        allow_mock_detector=True,
+    )
     assert result.n_dropout_steps > 0
     assert result.drift_baseline.drift_within_dropout > 0.0
     assert (out / "drift_gate.json").exists()
     assert (out / "nav_log.json").exists()
+
+
+def test_drift_gate_requires_detector_or_flag(tmp_path: Path) -> None:
+    scenario = load_yaml_model(HOLO_SCENARIO, ScenarioConfig)
+    out = tmp_path / "gate"
+    with pytest.raises(ValueError, match="--detector|--allow-mock-detector"):
+        run_drift_gate(HOLO_FIXTURE, scenario, out)
+
+
+def test_drift_gate_records_detector_context_with_mock_flag(tmp_path: Path) -> None:
+    scenario = load_yaml_model(HOLO_SCENARIO, ScenarioConfig)
+    out = tmp_path / "gate"
+    result = run_drift_gate(
+        HOLO_FIXTURE,
+        scenario,
+        out,
+        allow_mock_detector=True,
+    )
+    payload = json.loads((out / "drift_gate.json").read_text(encoding="utf-8"))
+    assert payload["detector_context"] == result.detector_context
+    assert "MockDetector" in result.detector_context
+
+
+def test_drift_gate_passes_detector_weights_to_orchestration(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    scenario = load_yaml_model(HOLO_SCENARIO, ScenarioConfig)
+    out = tmp_path / "gate"
+    captured: dict = {}
+
+    def fake_orchestration(env, scen, out_dir, nav_checkpoint=None, detector_weights=None):
+        captured["detector_weights"] = detector_weights
+        out_dir.mkdir(parents=True, exist_ok=True)
+        (out_dir / "nav_log.json").write_text(
+            json.dumps([{"dvl_valid": True}]), encoding="utf-8"
+        )
+        (out_dir / "ctrl_log.json").write_text(
+            json.dumps([{"target_in_frame": False}]), encoding="utf-8"
+        )
+        return {"est_positions": [], "gt_positions": [], "dropout_mask": [], "in_frame": []}
+
+    fake_eval = MagicMock()
+    fake_eval.drift_learned = DriftMetrics(0.5, 0.5, 0.5)
+    fake_eval.drift_baseline = DriftMetrics(1.0, 1.0, 1.0)
+    fake_eval.tracking_retention = 0.5
+    fake_eval.coupling_mode = "parallel-eval"
+
+    monkeypatch.setattr("fathomfollow.nav.drift_gate.run_orchestration", fake_orchestration)
+    monkeypatch.setattr("fathomfollow.nav.drift_gate.evaluate_run", lambda *a, **k: fake_eval)
+
+    weights = tmp_path / "best.pt"
+    weights.write_text("fake", encoding="utf-8")
+    result = run_drift_gate(HOLO_FIXTURE, scenario, out, detector_weights=weights)
+    assert captured["detector_weights"] == weights
+    assert result.detector_context == str(weights)
 
 
 def test_estimator_load_checkpoint(tmp_path: Path) -> None:

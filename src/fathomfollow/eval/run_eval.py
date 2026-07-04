@@ -17,19 +17,45 @@ class EvalResult:
     drift_baseline: DriftMetrics
     tracking_retention: float
     detection_quality: DetectionQualityMetrics | None = None
+    coupling_mode: str = "parallel-eval"
 
 
 def _load_json(path: Path) -> list[dict]:
     return json.loads(path.read_text(encoding="utf-8"))
 
 
+def _load_run_metadata(run_dir: Path) -> dict:
+    path = run_dir / "run_metadata.json"
+    if not path.is_file():
+        return {}
+    return json.loads(path.read_text(encoding="utf-8"))
+
+
+def _image_shape_from_metadata(metadata: dict) -> tuple[int, int]:
+    height = metadata.get("camera_height")
+    width = metadata.get("camera_width")
+    if height is not None and width is not None:
+        return (int(height), int(width))
+    return (480, 640)
+
+
+def _track_active_flags(ctrl: list[dict]) -> list[bool]:
+    return [
+        bool(entry.get("track_active", entry.get("target_in_frame", False)))
+        for entry in ctrl
+    ]
+
+
 def evaluate_run(
     run_dir: Path,
     report_path: Path | None = None,
-    image_shape: tuple[int, int] = (480, 640),
+    image_shape: tuple[int, int] | None = None,
 ) -> EvalResult:
     nav = _load_json(run_dir / "nav_log.json")
     ctrl = _load_json(run_dir / "ctrl_log.json")
+    metadata = _load_run_metadata(run_dir)
+    if image_shape is None:
+        image_shape = _image_shape_from_metadata(metadata)
 
     est_positions = [np.asarray(entry["est_pos"], dtype=np.float64) for entry in nav]
     gt_positions = [np.asarray(entry["gt_pos"], dtype=np.float64) for entry in nav]
@@ -45,15 +71,17 @@ def evaluate_run(
             baseline_est.append(np.asarray(entry["est_pos"], dtype=np.float64))
     drift_baseline = compute_drift_metrics(baseline_est, gt_positions, dropout_mask)
 
-    in_frame = [bool(entry.get("target_in_frame", False)) for entry in ctrl]
+    in_frame = _track_active_flags(ctrl)
     retention = tracking_retention(in_frame)
     detection_quality = compute_detection_quality(ctrl, image_shape)
+    coupling_mode = str(metadata.get("coupling_mode", "parallel-eval"))
 
     result = EvalResult(
         drift_learned=drift_learned,
         drift_baseline=drift_baseline,
         tracking_retention=retention,
         detection_quality=detection_quality,
+        coupling_mode=coupling_mode,
     )
 
     if report_path is not None:
@@ -64,6 +92,7 @@ def evaluate_run(
             retention=result.tracking_retention,
             ablation=None,
             detection_quality=result.detection_quality,
+            coupling_mode=result.coupling_mode,
         )
 
     return result

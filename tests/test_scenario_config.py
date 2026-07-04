@@ -14,3 +14,8 @@ def test_scenario_holoocean_has_forced_dropout() -> None:
     cfg = load_yaml_model(Path("config/scenario_holoocean.yaml"), ScenarioConfig)
     assert cfg.name == "holoocean_smoke"
     assert len(cfg.dropout.forced_windows) >= 1
+
+
+def test_scenario_holoocean_has_target_class_id() -> None:
+    cfg = load_yaml_model(Path("config/scenario_holoocean.yaml"), ScenarioConfig)
+    assert cfg.target_class_id == 0

@@ -2,11 +2,11 @@
 
 ## Current State
 
-**Last updated:** 2026-07-04T17:55:00Z
-**Last completed step:** FB-002 — HoloOcean target mimic spawn + fixture re-record (Step 3.3 **Complete**)
-**Test suite:** 90/90 passing | last run: 2026-07-04 (Python 3.11 venv)
-**Active blockers:** `tilt_max_deg` unwired (FB-008); hero not clone-reproducible (FB-005); GS sim-transfer regression; parallel-eval nav (FB-007)
-**Next action:** **FB-004** class filter + det logging — see `## Builder Backlog: Customer Feedback`
+**Last updated:** 2026-07-04T19:00:00Z
+**Last completed step:** FB-005 — artifact registry + `ff-fetch hero` + preflight
+**Test suite:** 112/112 passing | last run: 2026-07-04 (Python 3.11 venv)
+**Active blockers:** `tilt_max_deg` unwired (FB-008); GS sim-transfer regression
+**Next action:** **FB-011** `docs/reproduce_hero.md` + canonical weights path — see `## Builder Backlog: Customer Feedback`
 
 ## Open Judgment Calls
 
@@ -875,6 +875,8 @@ Two loops (perception→control, navigation) share HoloOcean via `SimEnv`. Offli
 
 **v1 success criterion: MET** (live integration gate, Step 4.4)
 
+**Coupling disclosure (FB-007):** v1 runs use **`coupling_mode: parallel-eval`**. Perception (detect → track → follow) is a closed loop; nav (DriftGuard vs dead reckoning) runs in the same timestep but **does not steer** `FollowController`. Reports and `run_metadata.json` record this explicitly so drift metrics are not read as full nav→control coupling.
+
 Primary evidence run: `ff-run --live` on PierHarbor-HoveringCamera with Bathochordaeus train-2 detector and trained DriftGuard.
 
 ### Final evaluation output (verbatim, live hero — Step 4.4)
@@ -1022,7 +1024,7 @@ From `pyproject.toml` (main venv, Python ≥3.11):
 
 ### Closing note
 
-FathomFollow v1 is a reproducible simulation stack that closes the loop from FathomNet-trained perception through visual follow and DVL-dropout navigation in HoloOcean. On the live PierHarbor integration gate, DriftGuard reduced position drift within dropout by **1.34 m** versus classical dead reckoning while maintaining **79%** target-in-frame retention with real YOLO detections. The GS augmentation experiment was executed honestly and did not improve sim-frame detector firing rates at nine composited frames — a useful null result. A second pass would prioritize GS scale (hundreds of frames, domain-matched scenes), ByteTrack on real detection sequences, and optional in-loop GS or RL control behind existing interfaces.
+FathomFollow v1 is a reproducible simulation stack for FathomNet-trained perception, visual follow, and DVL-dropout navigation in HoloOcean (**coupling_mode: parallel-eval** — nav does not steer the controller in v1). On the live PierHarbor integration gate, DriftGuard reduced position drift within dropout by **1.27 m** versus classical dead reckoning while **79% active-track retention** with real YOLO detections. The GS augmentation experiment was executed honestly and did not improve sim-frame detector firing rates at nine composited frames — a useful null result. A second pass would prioritize GS scale (hundreds of frames, domain-matched scenes), ByteTrack on real detection sequences, and optional in-loop GS or RL control behind existing interfaces.
 
 > **Addendum (2026-07-04):** Post–code-review attitude fix superseded pre-fix drift margins. Authoritative post-fix metrics are in **Addendum A** below and `docs/baselines.json` (`nav_attitude` field). v1 success criterion remains **MET**.
 
@@ -1273,4 +1275,94 @@ FB-001 (docs, 1 session)
 **judgment_calls:** None
 **blockers:** None
 **next:** FB-004 Bathochordaeus class_id filter + auditable ctrl_log
+<!-- /DIARY_ENTRY -->
+
+<!-- DIARY_ENTRY -->
+### [2026-07-04T18:00:00Z] FB-004 — Bathochordaeus class_id filter + det logging
+
+**project:** FathomFollow
+**step:** FB-004
+**phase:** Customer feedback remediation
+**status:** Complete
+**files_touched:** src/fathomfollow/perception/detector.py, src/fathomfollow/config/models.py, src/fathomfollow/run.py, config/scenario_holoocean.yaml, tests/test_detector.py, tests/test_run_orchestration.py, tests/test_scenario_config.py, implementation-spec.md
+**tests_written:** test_yolo_detector_filters_by_class_id, test_yolo_detector_without_class_filter_returns_all_classes, test_run_orchestration_logs_detections, test_run_orchestration_passes_target_class_id_to_yolo, test_scenario_holoocean_has_target_class_id
+**tests_passing:** 95/95
+**summary:** `YoloDetector` accepts optional `class_id` and filters post-threshold; `ScenarioConfig.target_class_id` (default 0 = Bathochordaeus) wired through `_make_detector`. Hero scenario YAML pins `target_class_id: 0`. ctrl_log already logs per-frame `n_dets`, `dets`, `gt_pose`, `gt_target_pose`, `target_in_frame` for eval audit (`track_active_fraction` vs `gt_in_frame_fraction` remain distinct in ff-eval).
+**tdd_cycle:** RED — class filter + scenario + ctrl_log contract tests | GREEN — detector filter + config/run wiring | REFACTOR — shared YOLO mock helpers in test_detector
+**deviations:** None
+**judgment_calls:** None
+**blockers:** None
+**next:** FB-006 drift-gate detector contract (`--detector` / `--allow-mock-detector`)
+<!-- /DIARY_ENTRY -->
+
+<!-- DIARY_ENTRY -->
+### [2026-07-04T18:15:00Z] FB-006 — Drift-gate detector contract
+
+**project:** FathomFollow
+**step:** FB-006
+**phase:** Customer feedback remediation
+**status:** Complete
+**files_touched:** src/fathomfollow/nav/drift_gate.py, src/fathomfollow/cli.py, tests/test_drift_gate.py, implementation-spec.md
+**tests_written:** test_drift_gate_requires_detector_or_flag, test_drift_gate_records_detector_context_with_mock_flag, test_drift_gate_passes_detector_weights_to_orchestration
+**tests_passing:** 98/98
+**summary:** `ff-drift-gate` mirrors `ff-run` with `--detector`; `--allow-mock-detector` required for MockDetector (no silent 88% retention). `run_drift_gate` rejects missing detector context via `ValueError`; CLI exits 2 with hint. `drift_gate.json` records `detector_context` (weights path or explicit MockDetector label).
+**tdd_cycle:** RED — require detector/flag + context logging tests | GREEN — `_detector_context` guard + CLI flags + DriftGateResult field | REFACTOR — existing dropout test uses explicit mock flag
+**deviations:** None
+**judgment_calls:** None
+**blockers:** None
+**next:** FB-007 coupling disclosure (`coupling_mode: parallel-eval` in report + metadata)
+<!-- /DIARY_ENTRY -->
+
+<!-- DIARY_ENTRY -->
+### [2026-07-04T18:30:00Z] FB-007 — Coupling disclosure
+
+**project:** FathomFollow
+**step:** FB-007
+**phase:** Customer feedback remediation
+**status:** Complete (metrics honesty cluster; pending review gate before FB-005)
+**files_touched:** src/fathomfollow/eval/report.py, src/fathomfollow/eval/run_eval.py, src/fathomfollow/run.py, src/fathomfollow/nav/drift_gate.py, src/fathomfollow/cli.py, docs/baselines.json, tests/test_eval_from_run.py, tests/test_run_orchestration.py, implementation-spec.md
+**tests_written:** test_report_includes_coupling_mode, test_parallel_eval_ctrl_invariant_to_nav, test_run_orchestration_writes_run_metadata
+**tests_passing:** 101/101
+**summary:** `run_metadata.json` records `coupling_mode: parallel-eval`. `ff-eval` report adds Architecture section disclosing nav does not steer controller. `drift_gate.json` includes coupling_mode. baselines.json hero/drift-gate copy fixed ("Full closed loop" → perception closed loop + parallel nav eval). Final Spec coupling note appended.
+**tdd_cycle:** RED — report/metadata + ctrl-invariant tests | GREEN — COUPLING_MODE constant + metadata wiring | REFACTOR — drift_gate/eval/cli pass-through
+**deviations:** None
+**judgment_calls:** None
+**blockers:** Code review gate on FB-003–FB-007 before reproducibility sprint (FB-005)
+**next:** Code review → FB-005 artifact registry + `ff-fetch hero`
+<!-- /DIARY_ENTRY -->
+
+<!-- DIARY_ENTRY -->
+### [2026-07-04T18:45:00Z] Metrics honesty cluster — code review remediation
+
+**project:** FathomFollow
+**step:** FB-003–FB-007 review fixes
+**phase:** Customer feedback remediation
+**status:** Complete
+**files_touched:** src/fathomfollow/run.py, src/fathomfollow/eval/run_eval.py, src/fathomfollow/eval/report.py, tests/test_eval_from_run.py, tests/test_run_orchestration.py, tests/test_bbox_gt.py, implementation-spec.md
+**tests_written:** test_evaluate_run_uses_camera_shape_from_metadata, test_track_active_and_gt_in_frame_can_diverge
+**tests_passing:** 103/103
+**summary:** Code review gate: (1) `run_metadata.json` stores camera_width/height; `evaluate_run` derives image_shape for GT projection on 512×512 hero runs. (2) ctrl_log field renamed to `track_active`; report label → Active track retention (legacy `target_in_frame` still read). (3) Final Spec closing paragraph aligned with parallel-eval + active-track wording.
+**tdd_cycle:** RED — shape + divergence tests | GREEN — metadata shape + track_active rename | REFACTOR — backward-compat read path
+**deviations:** None
+**judgment_calls:** None
+**blockers:** None
+**next:** FB-005 artifact registry + `ff-fetch hero`
+<!-- /DIARY_ENTRY -->
+
+<!-- DIARY_ENTRY -->
+### [2026-07-04T19:00:00Z] FB-005 — Artifact registry + fetch
+
+**project:** FathomFollow
+**step:** FB-005
+**phase:** Customer feedback remediation
+**status:** Complete
+**files_touched:** docs/artifacts.json, fixtures/artifacts/hero/, src/fathomfollow/artifacts.py, src/fathomfollow/cli.py, src/fathomfollow/project_status.py, pyproject.toml, tests/test_artifacts.py, tests/test_run_orchestration.py, implementation-spec.md
+**tests_written:** tests/test_artifacts.py (8), test_run_preflight_missing_detector_weights
+**tests_passing:** 112/112
+**summary:** Committed hero bundle under `fixtures/artifacts/hero/` with SHA-256 registry in `docs/artifacts.json`. `ff-fetch hero` copies to canonical paths (`train-2/best.pt`, nav checkpoint) with hash verify. `ff-run` / `ff-drift-gate` preflight missing `--detector` / `--nav-checkpoint` paths with `ff-fetch hero` hint. `ff-status` shows registry sha256 ok / MISSING.
+**tdd_cycle:** RED — fetch/verify/preflight tests | GREEN — artifacts.py + CLI + status | REFACTOR — shared preflight helper
+**deviations:** Hero weights (~5.5 MB) committed in fixtures bundle for offline clone reproducibility
+**judgment_calls:** None
+**blockers:** None
+**next:** FB-011 reproduce_hero.md + pin canonical train output path
 <!-- /DIARY_ENTRY -->
