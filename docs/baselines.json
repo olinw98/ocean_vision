@@ -208,5 +208,33 @@
     "metrics_path": "runs/drift_gate_holoocean/drift_gate.json",
     "verdict": "pass",
     "interpretation": "Learned estimator reduces mean position drift within dropout by 1.29 m vs classical dead reckoning on live HoloOcean fixture replay"
+  },
+  "phase_4_hero_run": {
+    "recorded_at": "2026-07-04",
+    "description": "Phase 4 acceptance — end-to-end ff-run on holoocean_smoke with train-2 YOLO + trained DriftGuard",
+    "command": "ff-run --fixture fixtures/sim/holoocean_smoke.npz --scenario config/scenario_holoocean.yaml --detector runs/detect/train-2/weights/best.pt --nav-checkpoint data/nav_model/velocity_estimator.pt --out runs/hero_holoocean",
+    "fixture": "fixtures/sim/holoocean_smoke.npz",
+    "scenario": "config/scenario_holoocean.yaml",
+    "detector_weights": "runs/detect/train-2/weights/best.pt",
+    "nav_checkpoint": "data/nav_model/velocity_estimator.pt",
+    "n_steps": 100,
+    "n_dropout_steps": 45,
+    "drift_learned": {
+      "mean_drift": 0.665,
+      "max_drift": 1.462,
+      "drift_within_dropout": 0.720
+    },
+    "drift_baseline": {
+      "mean_drift": 1.943,
+      "max_drift": 4.745,
+      "drift_within_dropout": 2.007
+    },
+    "margin_dropout": 1.288,
+    "learned_beats_baseline_dropout": true,
+    "tracking_retention": 0.68,
+    "metrics_path": "runs/hero_holoocean/nav_log.json",
+    "report_path": "runs/hero_holoocean/report.md",
+    "verdict": "pass",
+    "interpretation": "Full closed loop with real YOLO on HoloOcean RGB replay: DriftGuard beats dead reckoning during dropout while target tracked 68% of steps"
   }
 }

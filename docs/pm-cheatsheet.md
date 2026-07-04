@@ -59,7 +59,7 @@ Cursor: use **fathomfollow-session-end** skill.
 | 1 | Complete on GPU | — |
 | 1.5 | Complete — real GS ablation recorded regression | Optional larger render batch |
 | 2 | Complete — drift margin **1.29 m** within dropout (holoocean_smoke) | — |
-| 3–4 | Code done; live metrics pending | HoloOcean hero run |
+| 3–4 | Complete — hero run 68% retention, 1.29 m drift margin | Optional `--live` hero |
 
 ## Key numbers (committed)
 

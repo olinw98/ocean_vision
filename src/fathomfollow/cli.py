@@ -191,19 +191,41 @@ def main_train_nav() -> None:
 
 def main_run() -> None:
     parser = argparse.ArgumentParser(prog="ff-run")
-    parser.add_argument("--scenario", type=Path, default=Path("config/scenario.yaml"))
-    parser.add_argument("--fixture", type=Path, default=Path("fixtures/sim/smoke.npz"))
+    parser.add_argument("--scenario", type=Path, default=Path("config/scenario_holoocean.yaml"))
+    parser.add_argument("--fixture", type=Path, default=Path("fixtures/sim/holoocean_smoke.npz"))
     parser.add_argument("--out", type=Path, default=Path("runs/latest"))
+    parser.add_argument(
+        "--detector",
+        type=Path,
+        default=None,
+        help="YOLO weights (e.g. runs/detect/train-2/weights/best.pt); MockDetector if omitted",
+    )
     parser.add_argument(
         "--nav-checkpoint",
         type=Path,
         default=None,
         help="DriftGuard weights (e.g. data/nav_model/velocity_estimator.pt)",
     )
+    parser.add_argument(
+        "--live",
+        action="store_true",
+        help="Use live HoloOcean instead of a recorded fixture",
+    )
     args = parser.parse_args()
     scenario = load_yaml_model(args.scenario, ScenarioConfig)
-    env = RecordedSimEnv(args.fixture)
-    result = run_orchestration(env, scenario, args.out, nav_checkpoint=args.nav_checkpoint)
+    if args.live:
+        from fathomfollow.sim.holoocean_env import HoloOceanSimEnv
+
+        env = HoloOceanSimEnv(scenario.holoocean_scenario)
+    else:
+        env = RecordedSimEnv(args.fixture)
+    result = run_orchestration(
+        env,
+        scenario,
+        args.out,
+        nav_checkpoint=args.nav_checkpoint,
+        detector_weights=args.detector,
+    )
     print(json.dumps({k: v for k, v in result.items() if k not in ("est_positions", "gt_positions")}))
 
 

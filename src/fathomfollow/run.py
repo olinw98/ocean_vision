@@ -12,19 +12,26 @@ from fathomfollow.integration import run_dual_nav_step
 from fathomfollow.nav.deadreckon import DeadReckoning
 from fathomfollow.nav.dropout import DropoutSimEnv
 from fathomfollow.nav.estimator import VelocityEstimator
-from fathomfollow.perception.detector import MockDetector
+from fathomfollow.perception.detector import MockDetector, YoloDetector
 from fathomfollow.perception.tracker import SimpleTracker
-from fathomfollow.sim.base import Command
+from fathomfollow.sim.base import Command, SimEnv
 from fathomfollow.sim.recorded import RecordedSimEnv
 
 
+def _make_detector(detector_weights: Path | None) -> MockDetector | YoloDetector:
+    if detector_weights is not None:
+        return YoloDetector(weights=detector_weights)
+    return MockDetector()
+
+
 def run_orchestration(
-    env: RecordedSimEnv,
+    env: SimEnv,
     scenario: ScenarioConfig,
     out_dir: Path,
     nav_checkpoint: Path | None = None,
+    detector_weights: Path | None = None,
 ) -> dict:
-    detector = MockDetector()
+    detector = _make_detector(detector_weights)
     tracker = SimpleTracker()
     controller = FollowController()
     dr = DeadReckoning()
@@ -77,7 +84,7 @@ def run_orchestration(
                 "target_in_frame": active is not None,
             }
         )
-        if hasattr(env, "done") and env.done:
+        if getattr(env, "done", False):
             break
         obs = wrapped.step(cmd)
 

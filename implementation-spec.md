@@ -2,11 +2,11 @@
 
 ## Current State
 
-**Last updated:** 2026-07-04T01:35:00Z
-**Last completed step:** Step 2.4 — Drift gate on `holoocean_smoke.npz` with trained nav checkpoint → margin_dropout **1.29 m** (learned 0.72 m vs baseline 2.01 m within dropout); Phase 2 acceptance pass
-**Test suite:** 73/73 passing | last run: 2026-07-04 (Python 3.11 venv)
+**Last updated:** 2026-07-04T02:00:00Z
+**Last completed step:** Step 4.3 — Hero ff-run on `holoocean_smoke.npz` with train-2 YOLO + nav checkpoint → margin_dropout **1.29 m**, tracking retention **68%**; Phase 4 acceptance pass
+**Test suite:** 74/74 passing | last run: 2026-07-04 (Python 3.11 venv)
 **Active blockers:** None for HoloOcean; GS sim-transfer hypothesis not supported at current batch size (9 frames)
-**Next action:** Phase 4 end-to-end `ff-run` hero on live HoloOcean with train-2 detector weights, or Phase 3 follow retention on scripted target scenario
+**Next action:** Optional live `ff-run --live` on HoloOcean, or declare v1 complete and document stretch items (in-loop GS, RL control, ByteTrack)
 
 ## Open Judgment Calls
 
@@ -790,6 +790,24 @@ Two loops (perception→control, navigation) share HoloOcean via `SimEnv`. Offli
 **judgment_calls:** None
 **blockers:** None
 **next:** Phase 4 end-to-end `ff-run` hero on live HoloOcean with train-2 detector weights, or Phase 3 follow retention on scripted target scenario
+<!-- /DIARY_ENTRY -->
+
+<!-- DIARY_ENTRY -->
+### [2026-07-04T02:00:00Z] Step 4.3 — Hero ff-run + eval (Phase 4 acceptance)
+
+**project:** FathomFollow
+**step:** 4.3
+**phase:** Phase 4
+**status:** Complete
+**files_touched:** src/fathomfollow/run.py, src/fathomfollow/cli.py, tests/test_run_orchestration.py, docs/baselines.json, implementation-spec.md, runs/hero_holoocean/ (local, gitignored)
+**tests_written:** tests/test_run_orchestration.py::test_run_orchestration_uses_yolo_when_weights_provided
+**tests_passing:** 74/74
+**summary:** Wired `--detector` and optional `--live` on `ff-run`; `run_orchestration` loads YoloDetector when weights provided. Hero run on holoocean_smoke replay with train-2 + nav checkpoint: drift_within_dropout **0.72 m** vs baseline **2.01 m** (margin **1.29 m**), tracking_retention **68%** with real detections (vs 88% MockDetector drift gate). `ff-eval` report written. Phase 4 acceptance met.
+**tdd_cycle:** RED — Yolo wiring test | GREEN — run.py + cli.py | REFACTOR — none
+**deviations:** Hero uses recorded fixture replay (same 100-frame holoocean_smoke.npz as Phase 1.3/2.4 gates); `--live` flag added but live hero not run this session
+**judgment_calls:** None
+**blockers:** None
+**next:** Optional live `ff-run --live` on HoloOcean, or declare v1 complete and document stretch items (in-loop GS, RL control, ByteTrack)
 <!-- /DIARY_ENTRY -->
 
 ## Final Spec
