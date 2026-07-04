@@ -2,11 +2,11 @@
 
 ## Current State
 
-**Last updated:** 2026-06-11T18:00:00Z
-**Last completed step:** Step 1.5.4 — Real GS merge + retrain (train-4) + ablation vs proxy 2.12 and HoloOcean 0.58 → regression on both fixtures
-**Test suite:** 68/68 passing | last run: 2026-06-11 (Python 3.11 venv)
+**Last updated:** 2026-07-04T01:35:00Z
+**Last completed step:** Step 2.4 — Drift gate on `holoocean_smoke.npz` with trained nav checkpoint → margin_dropout **1.29 m** (learned 0.72 m vs baseline 2.01 m within dropout); Phase 2 acceptance pass
+**Test suite:** 73/73 passing | last run: 2026-07-04 (Python 3.11 venv)
 **Active blockers:** None for HoloOcean; GS sim-transfer hypothesis not supported at current batch size (9 frames)
-**Next action:** Phase 2 drift gate on `holoocean_smoke.npz` with train-2 weights (pre-GS baseline path), or expand GS render batch before another merge/retrain
+**Next action:** Phase 4 end-to-end `ff-run` hero on live HoloOcean with train-2 detector weights, or Phase 3 follow retention on scripted target scenario
 
 ## Open Judgment Calls
 
@@ -772,6 +772,24 @@ Two loops (perception→control, navigation) share HoloOcean via `SimEnv`. Offli
 **judgment_calls:** None
 **blockers:** None
 **next:** Phase 2 drift gate on holoocean_smoke with train-2 weights; or larger GS render batch before retry merge
+<!-- /DIARY_ENTRY -->
+
+<!-- DIARY_ENTRY -->
+### [2026-07-04T01:35:00Z] Step 2.4 — Drift gate on holoocean_smoke (Phase 2 acceptance)
+
+**project:** FathomFollow
+**step:** 2.4
+**phase:** Phase 2
+**status:** Complete
+**files_touched:** docs/baselines.json, implementation-spec.md, runs/drift_gate_holoocean/drift_gate.json (local, gitignored)
+**tests_written:** n/a — drift gate plumbing already in tests/test_drift_gate.py from commit 56354fb
+**tests_passing:** 73/73
+**summary:** Pulled `56354fb` (ff-drift-gate CLI + drift_gate.py). Ran `ff-drift-gate` on `fixtures/sim/holoocean_smoke.npz` with `config/scenario_holoocean.yaml`, nav checkpoint `data/nav_model/velocity_estimator.pt`, 100 steps / 45 dropout steps (forced window [1.0, 2.5] s). Learned drift_within_dropout **0.72 m** vs baseline **2.01 m** → margin **1.29 m**; tracking_retention **0.88**. Phase 2 acceptance criterion met. Pre-GS train-2 detector context documented; ff-run orchestration still uses MockDetector for perception during nav gate.
+**tdd_cycle:** n/a — manual integration gate (fixture replay)
+**deviations:** None
+**judgment_calls:** None
+**blockers:** None
+**next:** Phase 4 end-to-end `ff-run` hero on live HoloOcean with train-2 detector weights, or Phase 3 follow retention on scripted target scenario
 <!-- /DIARY_ENTRY -->
 
 ## Final Spec

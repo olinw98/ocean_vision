@@ -180,5 +180,33 @@
     },
     "overall_verdict": "regression",
     "interpretation": "Val mAP50 ticked up (+0.013 vs train-2) but sim-fixture firing rates fell on both proxy and live HoloOcean RGB; 9 composited GS frames insufficient for sim-domain transfer"
+  },
+  "phase_2_drift_gate": {
+    "recorded_at": "2026-07-04",
+    "description": "Phase 2 acceptance — DriftGuard vs dead-reckoning baseline within DVL dropout windows on holoocean_smoke replay",
+    "command": "ff-drift-gate --fixture fixtures/sim/holoocean_smoke.npz --scenario config/scenario_holoocean.yaml --nav-checkpoint data/nav_model/velocity_estimator.pt --out runs/drift_gate_holoocean",
+    "fixture": "fixtures/sim/holoocean_smoke.npz",
+    "scenario": "config/scenario_holoocean.yaml",
+    "nav_checkpoint": "data/nav_model/velocity_estimator.pt",
+    "detector_context": "runs/detect/train-2/weights/best.pt (pre-GS baseline path; ff-run uses MockDetector for nav gate)",
+    "n_steps": 100,
+    "n_dropout_steps": 45,
+    "dropout_windows": [[1.0, 2.5]],
+    "drift_learned": {
+      "mean_drift": 0.665,
+      "max_drift": 1.462,
+      "drift_within_dropout": 0.720
+    },
+    "drift_baseline": {
+      "mean_drift": 1.943,
+      "max_drift": 4.745,
+      "drift_within_dropout": 2.007
+    },
+    "margin_dropout": 1.288,
+    "learned_beats_baseline_dropout": true,
+    "tracking_retention": 0.88,
+    "metrics_path": "runs/drift_gate_holoocean/drift_gate.json",
+    "verdict": "pass",
+    "interpretation": "Learned estimator reduces mean position drift within dropout by 1.29 m vs classical dead reckoning on live HoloOcean fixture replay"
   }
 }

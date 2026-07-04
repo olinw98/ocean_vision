@@ -58,7 +58,7 @@ Cursor: use **fathomfollow-session-end** skill.
 | 0 | Complete (HoloOcean smoke on build machine) | — |
 | 1 | Complete on GPU | — |
 | 1.5 | Complete — real GS ablation recorded regression | Optional larger render batch |
-| 2 | Code + fixture drift gate; margin not recorded in baselines | `ff-drift-gate` on build machine with trained nav |
+| 2 | Complete — drift margin **1.29 m** within dropout (holoocean_smoke) | — |
 | 3–4 | Code done; live metrics pending | HoloOcean hero run |
 
 ## Key numbers (committed)
