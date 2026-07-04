@@ -2,11 +2,11 @@
 
 ## Current State
 
-**Last updated:** 2026-07-04T02:15:00Z
-**Last completed step:** Step 4.4 — Live `ff-run --live` on PierHarbor → margin_dropout **1.34 m**, tracking retention **79%**; v1 live integration gate pass
+**Last updated:** 2026-07-04T02:30:00Z
+**Last completed step:** Chapter 4 — Final Spec written; v1 **complete**
 **Test suite:** 74/74 passing | last run: 2026-07-04 (Python 3.11 venv)
-**Active blockers:** None for HoloOcean; GS sim-transfer hypothesis not supported at current batch size (9 frames)
-**Next action:** Declare v1 complete (Final Spec chapter), or pursue stretch backlog (larger GS batch, ByteTrack, in-loop GS, RL control)
+**Active blockers:** None for HoloOcean; GS sim-transfer not supported at 9-frame batch size
+**Next action:** Stretch backlog only (larger GS batch, ByteTrack, in-loop GS, RL control) — no v1 gates remaining
 
 ## Open Judgment Calls
 
@@ -828,6 +828,179 @@ Two loops (perception→control, navigation) share HoloOcean via `SimEnv`. Offli
 **next:** Declare v1 complete (Final Spec chapter), or pursue stretch backlog (larger GS batch, ByteTrack, in-loop GS, RL control)
 <!-- /DIARY_ENTRY -->
 
+<!-- DIARY_ENTRY -->
+### [2026-07-04T02:30:00Z] Chapter 4 — Final Spec (v1 complete)
+
+**project:** FathomFollow
+**step:** 4 / Chapter 4
+**phase:** Phase 4
+**status:** Complete
+**files_touched:** implementation-spec.md (## Final Spec)
+**tests_written:** n/a
+**tests_passing:** 74/74
+**summary:** Final Spec written. v1 success criterion met on live hero (79% retention, 1.34 m dropout drift margin). GS ablation documented as regression at 9 frames. Canonical record complete.
+**tdd_cycle:** n/a — spec finalization
+**deviations:** Documented in Final Spec deviation log
+**judgment_calls:** None new
+**blockers:** None
+**next:** Stretch backlog only
+<!-- /DIARY_ENTRY -->
+
 ## Final Spec
 
-*(To be completed in Chapter 4.)*
+**Finalized:** 2026-07-04T02:30:00Z  
+**Authoritative metrics:** `docs/baselines.json`  
+**Success criterion (implementation-plan rev. 2):** Closed-loop run where the AUV keeps the target in frame while drift-within-dropout under the learned estimator is lower than the dead-reckoning baseline.
+
+### Verdict
+
+**v1 success criterion: MET** (live integration gate, Step 4.4)
+
+Primary evidence run: `ff-run --live` on PierHarbor-HoveringCamera with Bathochordaeus train-2 detector and trained DriftGuard.
+
+### Final evaluation output (verbatim, live hero — Step 4.4)
+
+`ff-eval --run runs/hero_holoocean_live`:
+
+```json
+{"drift_learned_mean": 0.6602264575225086, "drift_within_dropout": 0.7137093111097095, "tracking_retention": 0.79, "report": "runs/hero_holoocean_live/report.md"}
+```
+
+`runs/hero_holoocean_live/report.md`:
+
+```
+# FathomFollow Evaluation Report
+
+## Navigation Drift
+- Baseline mean drift: 1.9868 m
+- Baseline drift within dropout: 2.0532 m
+- Learned mean drift: 0.6602 m
+- Learned drift within dropout: 0.7137 m
+
+## Tracking
+- Target in-frame retention: 79.00%
+```
+
+Fixture-replay hero (Step 4.3) for comparison: tracking retention **68%**, margin_dropout **1.29 m**. Drift-gate nav-only (Step 2.4, MockDetector): retention **88%**, margin **1.29 m**.
+
+### GS ablation outcome (honest null / regression)
+
+Real WaterSplatting (IUI3-RedSea, 15k iter, 9 composited frames merged with FathomNet):
+
+| Fixture | Pre-GS firing rate (train-2) | Post-GS firing rate (train-4) | Verdict |
+|---------|------------------------------|-------------------------------|---------|
+| fathomnet_proxy (50 fr) | 2.12 | 0.46 | regression |
+| holoocean_smoke (100 fr) | 0.58 | 0.00 | regression |
+
+Val mAP50 ticked up (+0.013 to 0.657) but sim-domain firing rates fell. **GS augmentation did not improve sim transfer at this batch size.**
+
+### Actual file structure
+
+```
+ocean_vision/
+├── agent-prompt.md
+├── implementation-plan.md
+├── implementation-spec.md          ← this file (canonical build record)
+├── pyproject.toml
+├── config/                         ← scenario, train, render YAML
+├── docs/
+│   ├── baselines.json              ← committed metrics
+│   ├── holoocean_install.md
+│   ├── gs_setup.md
+│   ├── workflow.md
+│   └── pm-cheatsheet.md
+├── fixtures/
+│   ├── sim/                        ← smoke.npz, holoocean_smoke.npz, fathomnet_proxy.npz
+│   └── gs/recorded/                ← stub GS fixture for unit tests
+├── src/fathomfollow/
+│   ├── cli.py                      ← ff-* entrypoints
+│   ├── run.py                      ← closed-loop orchestration
+│   ├── integration.py
+│   ├── project_status.py           ← ff-status
+│   ├── config/models.py
+│   ├── data/                       ← FathomNet pipeline, merge
+│   ├── perception/                 ← YoloDetector, SimpleTracker, sim_infer
+│   ├── nav/                        ← DriftGuard, dropout, drift_gate, training
+│   ├── control/visual_servo.py
+│   ├── sim/                        ← SimEnv, RecordedSimEnv, HoloOceanSimEnv
+│   ├── gs/                         ← WaterSplattingGSRenderer, RecordedGSRenderer
+│   └── eval/                       ← metrics, report, run_eval
+└── tests/                          ← 74 tests, no HoloOcean/GS train deps
+```
+
+Local-only (gitignored): `data/`, `runs/`, `models/gs/train_outputs/`, `.venv/`, WaterSplatting conda env.
+
+### Actual dependencies
+
+From `pyproject.toml` (main venv, Python ≥3.11):
+
+| Package | Constraint | Notes |
+|---------|------------|-------|
+| numpy | ≥1.26,<3 | |
+| pydantic | ≥2.7,<3 | config models |
+| pyyaml | ≥6.0,<7 | |
+| torch | ≥2.2,<3 | CUDA on build machine (2.12 observed) |
+| ultralytics | ≥8.3,<9 | YOLO11 detector |
+| filterpy | ≥1.4,<2 | optional EKF path |
+| fathomnet | ≥1.5,<2 | fathomnet-py 1.10 used |
+| supervision | ≥0.24,<1 | |
+| pillow, pyarrow | pinned ranges | data I/O |
+
+**HoloOcean:** `holoocean==2.3.0` from sibling GitHub client install (not PyPI; Python 3.11 required on Windows).
+
+**GS stack (separate conda env, Python 3.8):** WaterSplatting / nerfstudio; torch 2.1.2+cu118 per `docs/gs_setup.md`.
+
+**GS source data:** SeaThru-NeRF `IUI3-RedSea` (29 posed images, COLMAP-aligned render path).
+
+### Actual API / interface contracts
+
+**CLI (implemented):**
+
+| Command | Purpose |
+|---------|---------|
+| `ff-data prepare\|count\|auto-prepare\|merge` | FathomNet → YOLO, merge GS renders |
+| `ff-train-detector` | Ultralytics YOLO fine-tune |
+| `ff-train-nav` | DriftGuard GRU training |
+| `ff-gs train\|render` | WaterSplatting subprocess |
+| `ff-run [--fixture PATH] [--live] [--detector PATH] [--nav-checkpoint PATH] [--scenario PATH] [--out PATH]` | Closed loop |
+| `ff-drift-gate` | Phase 2 nav acceptance on fixture replay |
+| `ff-eval [--run PATH] [--ablate-gs]` | Consolidated report from run logs |
+| `ff-status [--check-diary] [--json]` | Project snapshot |
+
+**Core interfaces (as implemented):**
+
+- `SimEnv`: `reset() → SimObservation`, `step(Command) → SimObservation`, `close()`
+- `SimObservation`: `t, rgb, imu(6,), dvl(3,) body-frame, dvl_valid, gt_pose(7,), gt_target_pose(7,)` — GT eval-only
+- `Command`: `forward_vel, yaw_rate, vertical_vel`
+- `YoloDetector.detect(rgb, frame_id) → list[DetectionRecord]`
+- `MockDetector`: test/fixture detector (mean-RGB heuristic)
+- `SimpleTracker.update(dets) → tracks`; `select_active(tracks)`
+- `FollowController.command(active_track, image_shape) → Command`
+- `VelocityEstimator.estimate(imu_window, dvl?) → body_vel(3,)`; `load(checkpoint)`
+- `GSRenderer.render(pose, turbidity) → rgb` — offline only in v1
+- `run_orchestration(env, scenario, out_dir, nav_checkpoint?, detector_weights?)` — parallel-eval nav (no nav feedback into controller)
+
+### Deviation log
+
+| Blueprint item | As built | Reason |
+|----------------|----------|--------|
+| ByteTrack tracker | SimpleTracker | v1 test contract; sufficient for single-target sim |
+| Nav→controller closed loop | Parallel-eval | Open question default; eval compares drift in same run windows |
+| GS in live control loop | Offline augmentation only | v1 scope; stretch deferred |
+| EKF fusion | Dead reckoning + optional filterpy | Baseline intentionally naive |
+| Single Python env | Dual env (3.11 main + 3.8 GS conda) | WaterSplatting torch pins |
+| COCO auto-prepare default | YOLO auto-prepare default | fathomnet-py COCO path broken for some taxa |
+| RL follow controller | Classical visual servo | Stretch not started |
+| Target taxon auto-select | Bathochordaeus locked for v1 | 1350 images, best ablation record |
+
+### Known issues / future work
+
+1. **Sim–real appearance gap:** Detector fires on 58% of live HoloOcean frames (train-2); GS at 9 frames regressed sim firing rates despite +0.013 val mAP50.
+2. **GS turbidity:** Post-render blue-channel tint, not medium-model sweep in all paths.
+3. **Dropout model:** Forced time windows + altitude/tilt rules; not validated against field DVL statistics.
+4. **Tracker:** SimpleTracker vs ByteTrack when real detection sequences accumulate.
+5. **Stretch (v2):** In-loop GS rendering co-registered to HoloOcean camera; RL controller behind `FollowController`; larger GS render batches; nav→controller coupling.
+
+### Closing note
+
+FathomFollow v1 is a reproducible simulation stack that closes the loop from FathomNet-trained perception through visual follow and DVL-dropout navigation in HoloOcean. On the live PierHarbor integration gate, DriftGuard reduced position drift within dropout by **1.34 m** versus classical dead reckoning while maintaining **79%** target-in-frame retention with real YOLO detections. The GS augmentation experiment was executed honestly and did not improve sim-frame detector firing rates at nine composited frames — a useful null result. A second pass would prioritize GS scale (hundreds of frames, domain-matched scenes), ByteTrack on real detection sequences, and optional in-loop GS or RL control behind existing interfaces.
