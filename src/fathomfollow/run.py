@@ -84,6 +84,9 @@ def run_orchestration(
                 "t": obs.t,
                 "cmd": asdict(cmd),
                 "n_dets": len(dets),
+                "dets": [d.to_dict() for d in dets],
+                "gt_pose": obs.gt_pose.tolist(),
+                "gt_target_pose": obs.gt_target_pose.tolist(),
                 "target_in_frame": active is not None,
             }
         )

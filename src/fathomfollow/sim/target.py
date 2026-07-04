@@ -14,3 +14,10 @@ def target_position_at(t: float, config: TargetMimicConfig) -> np.ndarray:
         y = config.radius * math.sin(angle)
         return np.array([x, y, config.depth], dtype=np.float64)
     return np.array([t * config.speed, 0.0, config.depth], dtype=np.float64)
+
+
+def target_pose_at(t: float, config: TargetMimicConfig) -> np.ndarray:
+    """Ground-truth target pose (xyz + quat xyzw) for eval harness."""
+    position = target_position_at(t, config)
+    quat = np.array([0.0, 0.0, 0.0, 1.0], dtype=np.float64)
+    return np.concatenate([position, quat])

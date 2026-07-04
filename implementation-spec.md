@@ -2,11 +2,11 @@
 
 ## Current State
 
-**Last updated:** 2026-07-04T03:15:00Z
-**Last completed step:** Attitude fix + Final Spec addendum; v1 success criterion **met** (live margin **1.27 m**, retention **79%**)
-**Test suite:** 77/77 passing | last run: 2026-07-04 (Python 3.11 venv)
-**Active blockers:** None for HoloOcean; `tilt_max_deg` dropout descoped (HoloOcean quat frame mismatch)
-**Next action:** Stretch backlog only (larger GS batch, ByteTrack, in-loop GS, RL control)
+**Last updated:** 2026-07-04T17:55:00Z
+**Last completed step:** FB-002 — HoloOcean target mimic spawn + fixture re-record (Step 3.3 **Complete**)
+**Test suite:** 90/90 passing | last run: 2026-07-04 (Python 3.11 venv)
+**Active blockers:** `tilt_max_deg` unwired (FB-008); hero not clone-reproducible (FB-005); GS sim-transfer regression; parallel-eval nav (FB-007)
+**Next action:** **FB-004** class filter + det logging — see `## Builder Backlog: Customer Feedback`
 
 ## Open Judgment Calls
 
@@ -1049,3 +1049,228 @@ Live hero verbatim (`ff-eval --run runs/hero_holoocean_live_v2`):
 **Verdict (unchanged):** v1 success criterion **MET** — learned drift within dropout remains lower than baseline while target is actively followed.
 
 **Remaining nav caveats:** (1) mission-start position and attitude seeded once from sim (equivalent to known dock pose); (2) `tilt_max_deg` dropout rule descoped until HoloOcean quaternion frame is mapped correctly for roll/pitch extraction.
+
+---
+
+## Builder Backlog: Customer Feedback
+
+**Source:** Adversarial sales/customer review (2026-07-04) — 7 area sub-reviews: target mimic + detection, artifacts/reproducibility, nav↔control coupling, GS augmentation, DVL dropout, tracking metrics + hero scale, field ops + GTM.
+
+**Customer verdict:** Conditional Pass (R&D collaboration) / **No-Go** (paid field deployment).
+
+**Builder charter:** Close P0 blockers before any external demo. Follow TDD (red → green → refactor). Append diary entry per completed FB task. Update `docs/baselines.json` when metrics change.
+
+### Messaging (stop / start)
+
+| Stop saying | Start saying |
+|-------------|--------------|
+| "AUV visual follow product" | "Sim-first research platform for perception + DVL-dropout nav" |
+| "GS closes sim-to-real gap" | "GS ablation measured the gap; 9 frames insufficient — scaling is stretch" |
+| "79% tracking retention" | "79% active-track coverage, ~10 s harbor demo, no spawned target (pre-FB-002)" |
+| "End-to-end closed loop" | "Perception closed loop + parallel nav eval (nav does not steer controller in v1)" |
+| "Follow-induced DVL dropout" | "Scripted + altitude-gated dropout (tilt pending FB-008)" |
+
+### P0 — Blockers (no external demo until done)
+
+| ID | Area | Task | Acceptance |
+|----|------|------|------------|
+| **FB-001** | GTM | Positioning docs: rewrite `README.md`; add `docs/positioning.md`, `docs/metrics-glossary.md` | Sim-only v1 banner; tiered quick start (pytest / fixture / live / GS); no "AUV product" framing |
+| **FB-002** | Mimic | Spawn HoloOcean secondary agent on `target_position_at()`; wire `ScenarioConfig.target` into `HoloOceanSimEnv` | `gt_target_pose` varies independently of `gt_pose`; Step 3.3 → Complete; manual gate logged |
+| **FB-003** | Detection | Eval-only GT bbox projection + `gt_in_frame_fraction`, precision/recall/IoU vs mimic | `ff-eval` report adds detection quality section; code only under `eval/` |
+| **FB-004** | Detection | Bathochordaeus `class_id` filter on `YoloDetector`; per-frame det logging in `ctrl_log` | Hero auditable; distinguish `track_active_fraction` vs `gt_in_frame_fraction` |
+| **FB-005** | Repro | `docs/artifacts.json` registry + `ff-fetch hero` + preflight in `ff-run`/`ff-drift-gate` | Fresh clone + `ff-fetch hero` → fixture hero runnable; missing weights exit 1 with hint |
+| **FB-006** | Nav | `ff-drift-gate --detector` (mirror `ff-run`); require detector or `--allow-mock-detector` for retention | `drift_gate.json` records detector context; no silent 88% MockDetector retention |
+| **FB-007** | Nav | Report `coupling_mode: parallel-eval` in `report.md` + run metadata; fix baselines copy ("Full closed loop" → honest) | External reader cannot assume nav→control coupling |
+| **FB-008** | Dropout | Fix HoloOcean `PoseSensor`→quat mapping; wire `tilt_max_deg` in `DropoutSimEnv`; re-record `holoocean_smoke.npz` | Hover roll/pitch sane (<5°); tilt gate tests pass; drift gate re-run logged |
+| **FB-009** | GS | Descope GS sim-transfer from sales materials; control retrain (FathomNet-only, 4 ep, same seed as train-4) | Isolate "GS hurt" vs "retrain hurt"; `docs/positioning.md` states null result |
+
+### P1 — Credible sim demo
+
+| ID | Area | Task | Acceptance |
+|----|------|------|------------|
+| **FB-010** | Mimic | `ff-eval-detect` CLI: sim P/R + firing rate on mimic fixture | `docs/baselines.json` key `sim_detection_quality` |
+| **FB-011** | Repro | `docs/reproduce_hero.md` (fast=fetch + fixture; full=retrain chain); pin canonical weights path | Re-train writes same path every time (not accidental `train-N`) |
+| **FB-012** | Repro | GitHub Actions: `pytest -q`; optional fixture-hero regression vs baselines ε | PR gate green without HoloOcean |
+| **FB-013** | Nav | EKF baseline via `filterpy` (triple track: learned / DVL-hold / EKF) | `drift_ekf` in drift gate + baselines |
+| **FB-014** | Metrics | Retention decomposition: `detection_recall`, `bridged_coverage`, `active_track_coverage`; GT centroid/IoU | Report replaces misleading "Target in-frame retention" label |
+| **FB-015** | Hero | `scenario_holoocean_long.yaml` (`max_steps: 500`); multi-run harness (mean±std) | Baselines array of runs, not N=1 scalar |
+| **FB-016** | Dropout | Maneuver fixture: record with follow commands (non-zero `Command`) | Dropout breakdown: forced vs alt vs tilt contributions |
+| **FB-017** | GS | `ff-gs ablate` harness (pre/post weights × fixtures → JSON) | One command reproduces regression numbers |
+| **FB-018** | GS | Render batch scale ≥200 frames + domain-matched scene evaluation | Only re-claim sim-transfer if HoloOcean firing rate improves |
+| **FB-019** | Ops | `docs/operator-runbook.md`, `docs/sim-to-real-bridge.md`, `docs/reproducibility.md` | Pool/tank phases documented; GS optional path |
+| **FB-020** | Tracker | ByteTrack behind tracker interface (`--tracker simple\|bytetrack`) | A/B on mimic fixture; judgment call 3.1 resolved or updated |
+
+### P2 — Stretch / polish
+
+| ID | Area | Task |
+|----|------|------|
+| FB-021 | Mimic | Implement or descope `spline` trajectory in `target.py` |
+| FB-022 | Nav | Nav→control closed loop (`coupling: closed-loop` in scenario YAML) — Option B: reacquisition on track loss |
+| FB-023 | GS | Real compositing or `annotated-region` labels; turbidity via WaterSplatting params |
+| FB-024 | Ops | Nightly HoloOcean smoke on build machine; `ff-status --require-hero` |
+| FB-025 | Ops | Docker sketch (`docs/docker-sketch.md`); artifact release tagging |
+| FB-026 | Repro | `uv.lock` / constraints; fixture bundle completeness (`fathomnet_proxy.npz`) |
+
+### Recommended builder execution order
+
+```
+FB-001 (docs, 1 session)
+  → FB-002 + FB-008 (parallel: mimic spawn + quat/dropout fix)
+  → FB-003 + FB-004 + FB-006 + FB-007 (metrics honesty + drift-gate fix)
+  → FB-005 + FB-011 (reproducibility)
+  → FB-009 + FB-017 (GS honesty + ablation harness)
+  → FB-010 + FB-014 + FB-015 (re-baseline on mimic fixture)
+  → P1 remainder / P2 as capacity allows
+```
+
+### FB task specs (P0 detail for first builder sprint)
+
+#### FB-001 — Positioning docs
+- **files:** `README.md`, `docs/positioning.md`, `docs/metrics-glossary.md`, `pyproject.toml` description
+- **tests:** none (docs only)
+- **acceptance:** README leads with sim-first platform; explicit non-goals; links Final Spec
+
+#### FB-002 — Spawn HoloOcean mimic (Step 3.3)
+- **files:** `src/fathomfollow/sim/holoocean_env.py`, `src/fathomfollow/sim/target.py`, `config/scenario_holoocean.yaml`, `scripts/smoke_sim.py`
+- **tests:** `tests/test_target_trajectory.py`, `tests/test_holoocean_mimic.py` (mock holoocean)
+- **tdd:** RED `test_holoocean_env_target_pose_differs_from_auv` → GREEN spawn + `target_position_at` wiring
+- **manual gate:** record fixture; log in-frame fraction; diary Step 3.3 Complete
+
+#### FB-003 — GT bbox projection (eval-only)
+- **files:** `src/fathomfollow/eval/bbox_gt.py`, `eval/metrics.py`, `eval/run_eval.py`
+- **tests:** `tests/test_bbox_gt.py`, extend `tests/test_eval_from_run.py`
+- **acceptance:** `gt_in_frame_fraction`, precision, recall, mean IoU in report
+
+#### FB-004 — Class filter + det logging
+- **files:** `perception/detector.py`, `run.py`, `config/scenario_holoocean.yaml` (`target_class_id`)
+- **tests:** `test_yolo_detector_filters_by_class_id`, `test_run_orchestration_logs_detections`
+
+#### FB-005 — Artifact registry + fetch
+- **files:** `docs/artifacts.json`, `src/fathomfollow/cli.py` (`ff-fetch`), `project_status.py`
+- **tests:** `tests/test_artifacts.py`, `tests/test_run_orchestration.py` (missing weights exit 1)
+- **acceptance:** `ff-fetch hero` populates train-2 + nav checkpoint with SHA-256 verify
+
+#### FB-006 — Drift-gate detector contract
+- **files:** `cli.py`, `nav/drift_gate.py`, `tests/test_drift_gate.py`
+- **tdd:** RED `test_drift_gate_requires_detector_or_flag` → GREEN `--detector` + `--allow-mock-detector`
+
+#### FB-007 — Coupling disclosure
+- **files:** `eval/report.py`, `run.py`, `docs/baselines.json` (wording), `implementation-spec.md` Final Spec closing note
+- **tests:** `test_report_includes_coupling_mode`, `test_parallel_eval_ctrl_invariant_to_nav`
+
+#### FB-008 — Quat fix + tilt dropout
+- **files:** `sim/holoocean_env.py`, `nav/dropout.py`, `tests/test_dropout.py`, `tests/test_holoocean_pose.py`
+- **tdd:** RED tilt/alt tests → GREEN `quat_to_rpy` + `tilt_max_deg` in `_apply_dropout`
+- **manual gate:** re-record `holoocean_smoke.npz`; `ff-drift-gate` → update baselines
+
+#### FB-009 — GS messaging + control retrain
+- **files:** `docs/positioning.md`, run train-4 control (no GS merge)
+- **acceptance:** Firing rates on proxy/HoloOcean vs train-2 documented; GS sim-transfer removed from README
+
+<!-- DIARY_ENTRY -->
+### [2026-07-04T17:15:00Z] Customer Feedback — Adversarial review + builder backlog
+
+**project:** FathomFollow
+**step:** post-v1
+**phase:** Customer feedback remediation
+**status:** Partial
+**files_touched:** implementation-spec.md (Current State, Builder Backlog section)
+**tests_written:** none
+**tests_passing:** 77/77 (unchanged)
+**summary:** Ran 7 parallel adversarial sales/customer sub-reviews (mimic+detection, artifacts, nav coupling, GS, DVL dropout, tracking metrics, field ops/GTM). Consolidated into FB-001–FB-026 backlog with P0/P1/P2 priorities and builder execution order. Customer verdict: Conditional Pass (R&D) / No-Go (field). v1 sim acceptance metrics stand but external claims require FB-001–FB-009 before demo.
+**tdd_cycle:** RED — n/a | GREEN — n/a | REFACTOR — none
+**deviations:** None
+**judgment_calls:** None
+**blockers:** None (work queued, not blocked)
+**next:** FB-003 GT bbox projection + `gt_in_frame_fraction`
+<!-- /DIARY_ENTRY -->
+
+<!-- DIARY_ENTRY -->
+### [2026-07-04T17:25:00Z] FB-001 — Positioning docs (customer feedback P0)
+
+**project:** FathomFollow
+**step:** FB-001
+**phase:** Customer feedback remediation
+**status:** Complete
+**files_touched:** README.md, docs/positioning.md, docs/metrics-glossary.md, pyproject.toml
+**tests_written:** none (docs only)
+**tests_passing:** 84/84
+**summary:** Rewrote README with sim-first platform banner and tiered quick start (pytest / fixture / live / GS). Added positioning.md (stop/start messaging, GS null result, non-goals) and metrics-glossary.md (firing_rate, retention vs gt_in_frame, parallel-eval). Updated pyproject description — no "AUV product" framing.
+**tdd_cycle:** RED — n/a | GREEN — n/a | REFACTOR — none
+**deviations:** None
+**judgment_calls:** None
+**blockers:** None
+**next:** FB-002 spawn HoloOcean mimic
+<!-- /DIARY_ENTRY -->
+
+<!-- DIARY_ENTRY -->
+### [2026-07-04T17:30:00Z] FB-002 — HoloOcean target mimic spawn (Step 3.3)
+
+**project:** FathomFollow
+**step:** FB-002 / 3.3
+**phase:** Customer feedback remediation / Phase 3
+**status:** Complete
+**files_touched:** src/fathomfollow/sim/holoocean_env.py, src/fathomfollow/sim/target.py, src/fathomfollow/cli.py, scripts/smoke_sim.py, fixtures/sim/holoocean_smoke.npz, docs/baselines.json, config/scenario_holoocean.yaml (unchanged), tests/test_holoocean_mimic.py, tests/test_target_trajectory.py, tests/test_scenario_config.py
+**tests_written:** tests/test_holoocean_mimic.py (5), tests/test_target_trajectory.py (3)
+**tests_passing:** 90/90
+**summary:** Wired `ScenarioConfig.target` into `HoloOceanSimEnv`: spawns `target_mimic0` SphereAgent, teleports via `target_position_at()`. Manual gate: re-recorded `holoocean_smoke.npz` (100 fr, 512×512) with `gt_pose_differs=true`, mean pose separation 5.38 m, `gt_in_frame_fraction=0.42`. Firing rate unchanged (0.58). Step 3.3 Complete.
+**tdd_cycle:** RED — test_map_holoocean_state_target_pose_differs_from_auv, test_holoocean_sim_env_spawns_and_teleports_target | GREEN — holoocean_env spawn/teleport + target_pose_at | REFACTOR — extract select_agent_state, test_target_trajectory split
+**deviations:** None
+**judgment_calls:** None
+**blockers:** None
+**next:** FB-003 GT bbox projection
+<!-- /DIARY_ENTRY -->
+
+<!-- DIARY_ENTRY -->
+### [2026-07-04T17:55:00Z] FB-002 — Manual gate: holoocean_smoke re-record with mimic
+
+**project:** FathomFollow
+**step:** FB-002 manual gate
+**phase:** Customer feedback remediation / Phase 3
+**status:** Complete
+**files_touched:** fixtures/sim/holoocean_smoke.npz, docs/baselines.json, implementation-spec.md
+**tests_written:** n/a (integration measurement)
+**tests_passing:** 90/90
+**summary:** Live `smoke_sim.py --live --scenario config/scenario_holoocean.yaml --frames 100` → `fixtures/sim/holoocean_smoke.npz`. Verified: gt_pose vs gt_target_pose differ all 100 frames (mean separation 5.38 m); smoke_sim reported `gt_pose_differs: true`. Eval projection: gt_in_frame_fraction **0.42**. YOLO train-2 firing_rate **0.58** (unchanged vs pre-mimic). FB-002 acceptance met; Step 3.3 Complete.
+**tdd_cycle:** n/a — manual integration gate
+**deviations:** None
+**judgment_calls:** None
+**blockers:** None
+**next:** FB-004 class filter
+<!-- /DIARY_ENTRY -->
+
+<!-- DIARY_ENTRY -->
+### [2026-07-04T17:40:00Z] FB-002 review — spawn safety + test hardening
+
+**project:** FathomFollow
+**step:** FB-002 review
+**phase:** Customer feedback remediation
+**status:** Complete (manual fixture recorded 2026-07-04)
+**files_touched:** src/fathomfollow/sim/holoocean_env.py, scripts/smoke_sim.py, tests/test_holoocean_mimic.py, tests/test_target_trajectory.py, README.md, implementation-spec.md
+**tests_written:** test_holoocean_sim_env_reset_does_not_double_add_agent, test_select_agent_state_legacy_flat_state, test_map_holoocean_state_without_target_config_falls_back_to_auv
+**tests_passing:** 85/85 → 90/90 after FB-003
+**summary:** Code-review response: reset() reuses existing target_mimic0 across HoloOcean reset (no double add_agent); smoke_sim exits 1 if GT poses identical; README 84/84; deduped scenario tests; documented scripted-GT contract in map_holoocean_state docstring.
+**tdd_cycle:** RED — reset/double-spawn tests | GREEN — spawn guard | REFACTOR — mock agents dict side_effect
+**deviations:** Resolved by 17:55Z manual gate re-record
+**judgment_calls:** None
+**blockers:** None
+**next:** FB-003 GT bbox projection
+<!-- /DIARY_ENTRY -->
+
+<!-- DIARY_ENTRY -->
+### [2026-07-04T17:45:00Z] FB-003 — GT bbox projection (eval-only)
+
+**project:** FathomFollow
+**step:** FB-003
+**phase:** Customer feedback remediation
+**status:** Complete
+**files_touched:** src/fathomfollow/eval/bbox_gt.py, src/fathomfollow/eval/run_eval.py, src/fathomfollow/eval/report.py, src/fathomfollow/run.py, src/fathomfollow/cli.py, tests/test_bbox_gt.py
+**tests_written:** tests/test_bbox_gt.py (5)
+**tests_passing:** 90/90
+**summary:** Eval-only pinhole projection (+x forward body frame) projects gt_target_pose to pixel bbox. `compute_detection_quality` aggregates gt_in_frame_fraction, precision, recall, mean IoU from ctrl_log dets vs projected GT. `ff-eval` report adds Detection quality section; run.py logs gt_pose, gt_target_pose, dets to ctrl_log (eval consumption only).
+**tdd_cycle:** RED — test_bbox_gt + report section | GREEN — bbox_gt.py + run_eval/report wiring | REFACTOR — HoloOcean +x-forward projection convention documented
+**deviations:** Projection uses fixed FOV/radius defaults; full camera intrinsics deferred
+**judgment_calls:** None
+**blockers:** None
+**next:** FB-004 Bathochordaeus class_id filter + auditable ctrl_log
+<!-- /DIARY_ENTRY -->

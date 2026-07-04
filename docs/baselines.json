@@ -40,9 +40,16 @@
         "scenario": "PierHarbor-HoveringCamera",
         "holoocean_version": "2.3.0",
         "rgb_shape": [512, 512, 3],
-        "recorded_at": "2026-06-11",
+        "recorded_at": "2026-07-04",
+        "target_mimic": true,
+        "target_agent": "target_mimic0",
+        "target_trajectory": "circle (radius 5 m, speed 0.5, depth -10 m)",
+        "gt_pose_differs": true,
+        "gt_pose_separation_m_mean": 5.38,
+        "gt_in_frame_fraction": 0.42,
+        "record_command": "python scripts/smoke_sim.py --live --scenario config/scenario_holoocean.yaml --out fixtures/sim/holoocean_smoke.npz --frames 100",
         "metrics_path": "runs/pre_gs_baseline_holoocean.json",
-        "note": "Live HoloOcean smoke; first real sim-frame detector baseline on Unreal RGB"
+        "note": "Live HoloOcean smoke with spawned target_mimic0 (FB-002); firing_rate unchanged vs 2026-06-11 pre-mimic fixture"
       }
     },
     "ablation_target_firing_rate": 2.12,

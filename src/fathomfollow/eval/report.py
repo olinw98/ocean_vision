@@ -16,6 +16,7 @@ def generate_report(
     drift_learned: DriftMetrics,
     retention: float,
     ablation: dict | None = None,
+    detection_quality: "DetectionQualityMetrics | None" = None,
 ) -> None:
     lines = [
         "# FathomFollow Evaluation Report",
@@ -30,6 +31,17 @@ def generate_report(
         f"- Target in-frame retention: {retention:.2%}",
         "",
     ]
+    if detection_quality is not None:
+        lines.extend(
+            [
+                "## Detection quality",
+                f"- GT in-frame fraction: {detection_quality.gt_in_frame_fraction:.2%}",
+                f"- Precision (IoU≥0.3 vs projected GT): {detection_quality.precision:.2%}",
+                f"- Recall: {detection_quality.recall:.2%}",
+                f"- Mean IoU (matches): {detection_quality.mean_iou:.4f}",
+                "",
+            ]
+        )
     if ablation:
         lines.extend(
             [

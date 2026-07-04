@@ -216,7 +216,7 @@ def main_run() -> None:
     if args.live:
         from fathomfollow.sim.holoocean_env import HoloOceanSimEnv
 
-        env = HoloOceanSimEnv(scenario.holoocean_scenario)
+        env = HoloOceanSimEnv(scenario.holoocean_scenario, target_config=scenario.target)
     else:
         env = RecordedSimEnv(args.fixture)
     result = run_orchestration(
@@ -279,14 +279,17 @@ def main_eval() -> None:
             drift_learned=result.drift_learned,
             retention=result.tracking_retention,
             ablation=ablation,
+            detection_quality=result.detection_quality,
         )
-    print(
-        json.dumps(
-            {
-                "drift_learned_mean": result.drift_learned.mean_drift,
-                "drift_within_dropout": result.drift_learned.drift_within_dropout,
-                "tracking_retention": result.tracking_retention,
-                "report": str(report_path),
-            }
-        )
-    )
+    payload = {
+        "drift_learned_mean": result.drift_learned.mean_drift,
+        "drift_within_dropout": result.drift_learned.drift_within_dropout,
+        "tracking_retention": result.tracking_retention,
+        "report": str(report_path),
+    }
+    if result.detection_quality is not None:
+        payload["gt_in_frame_fraction"] = result.detection_quality.gt_in_frame_fraction
+        payload["detection_precision"] = result.detection_quality.precision
+        payload["detection_recall"] = result.detection_quality.recall
+        payload["detection_mean_iou"] = result.detection_quality.mean_iou
+    print(json.dumps(payload))

@@ -5,7 +5,7 @@ build-backend = "hatchling.build"
 [project]
 name = "fathomfollow"
 version = "0.1.0"
-description = "Simulation-based AUV visual follow with DVL-dropout navigation"
+description = "Sim-first research platform: FathomNet perception + DVL-dropout nav in HoloOcean (not a field AUV product)"
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
